@@ -1,5 +1,3 @@
-# promotion-figma-plugin
-프로모션 기획안을 기반으로 와이어프레임을 생성하는 Figma 플러그인
 # Promotion Concept Analyzer - Slide Link v3.4
 
 Google Slides 링크 또는 PPTX 파일을 읽어 Figma 안에 프로모션 분석 결과와 기획안 기반 와이어프레임 목업을 생성하는 Figma 플러그인입니다.
