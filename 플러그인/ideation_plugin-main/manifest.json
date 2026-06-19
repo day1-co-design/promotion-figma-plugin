@@ -1,0 +1,21 @@
+{
+  "name": "Promotion Concept Analyzer - Slide Link v3.4",
+  "id": "1498000000000000006",
+  "api": "1.0.0",
+  "main": "code.js",
+  "ui": "ui.html",
+  "editorType": ["figma"],
+  "documentAccess": "dynamic-page",
+  "networkAccess": {
+    "allowedDomains": [
+      "https://docs.google.com",
+      "https://*.googleusercontent.com",
+      "https://googleusercontent.com",
+      "https://drive.usercontent.google.com",
+      "https://script.google.com",
+      "https://script.googleusercontent.com",
+      "https://*.workers.dev"
+    ],
+    "reasoning": "Google Slides 공유 링크에서 텍스트 export 또는 PPTX export 파일을 읽어 분석하기 위해 필요합니다."
+  }
+}

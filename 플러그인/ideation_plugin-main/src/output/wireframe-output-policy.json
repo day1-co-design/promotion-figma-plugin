@@ -1,0 +1,28 @@
+{
+  "version": "2026-06-19-output-boundary-v1",
+  "targetWidthPx": 1080,
+  "layoutModes": {
+    "exact": "원본 좌표/SVG 기반 레이아웃",
+    "compat": "구버전 프록시 호환 목업"
+  },
+  "compat": {
+    "enabled": true,
+    "status": "compat-text-fallback",
+    "methodSuffix": "compat-layout",
+    "slidesWarning": "구버전 프록시가 좌표를 반환하지 않아 호환 목업으로 생성했습니다.",
+    "pptxWarning": "PPTX 좌표 요소를 찾지 못해 호환 목업으로 생성했습니다."
+  },
+  "messages": {
+    "coordinateMissing": "원본 슬라이드의 위치 좌표/SVG 구조를 읽지 못해 와이어프레임 생성을 중단했습니다.\nGoogle Slides 링크 권한, Apps Script 프록시, 또는 PPTX 업로드 파일을 확인해 주세요."
+  },
+  "styles": {
+    "rootBackground": "#FFFFFF",
+    "canvasBackground": "#FFFFFF",
+    "placeholderFill": "#D9D9D9",
+    "placeholderOpacity": 0.82,
+    "imageOpacity": 0.42,
+    "rootTopGapPx": 60,
+    "slideGapPx": 96,
+    "rootBottomGapPx": 60
+  }
+}

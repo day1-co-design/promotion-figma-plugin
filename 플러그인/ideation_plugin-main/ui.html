@@ -1,0 +1,4443 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Promotion Concept Analyzer</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #ffffff;
+      --panel: #f6f6f6;
+      --text: #111111;
+      --muted: #666666;
+      --line: #dcdcdc;
+      --primary: #111111;
+      --primary-text: #ffffff;
+      --danger: #b00020;
+      --ok: #0f7a48;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 12px/1.5 Inter, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+    }
+
+    .shell {
+      display: grid;
+      grid-template-columns: 370px;
+      gap: 18px;
+      height: 100%;
+      padding: 18px 26px 18px 18px;
+    }
+
+    body.preview-expanded .shell {
+      grid-template-columns: 370px minmax(0, 1fr);
+      padding-right: 18px;
+    }
+
+    .control-panel,
+    .preview-panel {
+      min-height: 0;
+    }
+
+    .control-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      overflow-y: auto;
+      padding-right: 4px;
+      padding-bottom: 16px;
+    }
+
+    .control-panel > * {
+      flex-shrink: 0;
+    }
+
+    .preview-panel {
+      border-left: 1px solid var(--line);
+      padding-left: 18px;
+      padding-right: 28px;
+      display: none;
+      flex-direction: column;
+      gap: 12px;
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    body.preview-expanded .preview-panel {
+      display: flex;
+    }
+
+    .preview-heading {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 10px;
+    }
+
+    .preview-heading h2 {
+      margin: 0;
+      font-size: 14px;
+      letter-spacing: 0;
+    }
+
+    .preview-heading span {
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .heading-copy {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.25;
+      letter-spacing: 0;
+    }
+
+    .intro {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .advanced-area {
+      border-top: 1px solid #e8e8e8;
+      padding-top: 12px;
+    }
+
+    details.advanced {
+      border: 0;
+      border-radius: 0;
+      padding: 0;
+      background: transparent;
+      color: #999999;
+    }
+
+    details.advanced summary {
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 500;
+      color: #9b9b9b;
+    }
+
+    details.advanced .field {
+      margin-top: 9px;
+      gap: 5px;
+    }
+
+    details.advanced label {
+      color: #999999;
+      font-size: 10px;
+      font-weight: 500;
+    }
+
+    details.advanced input {
+      height: 30px;
+      border-color: #eeeeee;
+      background: #fafafa;
+      color: #777777;
+      font-size: 10px;
+    }
+
+    .copy-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .copy-row input {
+      min-width: 0;
+      flex: 1 1 auto;
+      user-select: text;
+    }
+
+    .copy-row button {
+      width: 52px;
+      height: 30px;
+      border-color: #dddddd;
+      color: #777777;
+      font-size: 10px;
+      font-weight: 600;
+      flex: 0 0 auto;
+    }
+
+    label {
+      font-weight: 700;
+    }
+
+    input,
+    textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--text);
+      background: #ffffff;
+      font: inherit;
+      outline: none;
+    }
+
+    input {
+      height: 38px;
+      padding: 0 11px;
+    }
+
+    input[type="file"] {
+      height: auto;
+      padding: 8px 10px;
+      cursor: pointer;
+    }
+
+    textarea {
+      min-height: 104px;
+      resize: vertical;
+      padding: 10px 11px;
+    }
+
+    input:focus,
+    textarea:focus {
+      border-color: #111111;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .divider {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .divider::before,
+    .divider::after {
+      content: "";
+      height: 1px;
+      background: var(--line);
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      position: sticky;
+      bottom: 0;
+      z-index: 2;
+      padding: 8px 0 2px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.86), #ffffff 22%);
+    }
+
+    .actions .wide {
+      grid-column: 1 / -1;
+    }
+
+    button {
+      height: 38px;
+      border: 1px solid #111111;
+      border-radius: 8px;
+      background: #ffffff;
+      color: #111111;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      min-width: 0;
+    }
+
+    button.primary {
+      background: var(--primary);
+      color: var(--primary-text);
+    }
+
+    button:disabled {
+      border-color: var(--line);
+      background: #eeeeee;
+      color: #999999;
+      cursor: default;
+    }
+
+    .status {
+      flex: 0 0 auto;
+      min-height: 64px;
+      border-radius: 8px;
+      padding: 10px 12px;
+      background: var(--panel);
+      color: var(--muted);
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      line-height: 1.45;
+    }
+
+    .status.ok {
+      color: var(--ok);
+    }
+
+    .status.error {
+      color: var(--danger);
+    }
+
+    .preview {
+      display: none;
+      flex: 1 1 auto;
+      min-height: 0;
+      gap: 10px;
+      overflow: hidden;
+    }
+
+    .preview.visible {
+      display: grid;
+      grid-template-rows: auto auto minmax(0, 1fr);
+    }
+
+    .preview-empty {
+      border: 1px dashed var(--line);
+      border-radius: 8px;
+      padding: 16px;
+      color: var(--muted);
+      background: #fafafa;
+    }
+
+    .analysis-method {
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.45;
+      overflow-wrap: anywhere;
+    }
+
+    .analysis-card {
+      padding: 10px;
+      border-radius: 8px;
+      background: var(--panel);
+      min-width: 0;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: 76px 1fr;
+      gap: 6px 10px;
+      margin: 0;
+    }
+
+    .summary dt {
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .summary dd {
+      margin: 0;
+      font-weight: 700;
+      font-size: 11px;
+    }
+
+    .overview-card {
+      display: grid;
+      grid-template-columns: 54px minmax(0, 1fr);
+      gap: 10px;
+      padding: 10px;
+      border-radius: 6px;
+      background: #ffffff;
+      margin-top: 10px;
+    }
+
+    .insight-row {
+      display: grid;
+      grid-template-columns: 76px 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .insight-label {
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .insight-text {
+      font-weight: 700;
+      font-size: 11px;
+      min-width: 0;
+    }
+
+    .overview-label {
+      align-self: center;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .overview-detail {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      min-width: 0;
+    }
+
+    .overview-row {
+      display: grid;
+      grid-template-columns: 56px minmax(0, 1fr);
+      gap: 8px;
+      align-items: start;
+    }
+
+    .overview-title {
+      font-weight: 700;
+      font-size: 12px;
+      line-height: 1.8;
+    }
+
+    .concepts {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      min-height: 0;
+    }
+
+    .concept {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      background: #ffffff;
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    .concept-title {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .concept-hook {
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      font-size: 11px;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    .chip {
+      border-radius: 999px;
+      background: #eeeeee;
+      padding: 3px 8px;
+      font-size: 11px;
+    }
+
+    .color-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 8px;
+    }
+
+    .swatch {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      padding: 3px 6px;
+      font-size: 9px;
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 1px solid #d8d8d8;
+      flex: 0 0 auto;
+    }
+
+    .preview-edge-toggle {
+      display: none;
+      position: fixed;
+      top: 50%;
+      right: 8px;
+      width: 24px;
+      height: 88px;
+      padding: 0;
+      border: 1px solid #dedede;
+      border-radius: 999px;
+      background: #ffffff;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.10);
+      transform: translateY(-50%);
+      z-index: 8;
+      transition: border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
+    }
+
+    body.has-analysis .preview-edge-toggle {
+      display: block;
+    }
+
+    .preview-edge-toggle:hover {
+      border-color: #b8b8b8;
+      background: #fafafa;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.14);
+    }
+
+    .preview-edge-toggle::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-35%, -50%);
+      width: 0;
+      height: 0;
+      border-top: 7px solid transparent;
+      border-bottom: 7px solid transparent;
+      border-left: 8px solid #7a7a7a;
+    }
+
+    body.preview-expanded .preview-edge-toggle::after {
+      transform: translate(-65%, -50%);
+      border-left: 0;
+      border-right: 8px solid #7a7a7a;
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="control-panel">
+      <header>
+        <h1>프로모션 컨셉 분석안 생성</h1>
+        <p class="intro">Google Slides 링크 또는 PPTX 파일을 분석해 정보 분석과 3개 디자인 컨셉을 생성합니다.</p>
+        <p class="intro">Slide Link v2.7</p>
+      </header>
+
+      <section class="field">
+        <label for="slidesUrl">Google Slides 기획안 링크</label>
+        <input id="slidesUrl" type="text" placeholder="https://docs.google.com/presentation/d/.../edit?slide=id.p#slide=id.p" />
+        <div class="hint">공유 설정이 "링크가 있는 모든 사용자 보기"인 슬라이드에서 가장 안정적으로 동작합니다.</div>
+      </section>
+
+      <div class="divider">또는</div>
+
+      <section class="field">
+        <label for="pptxFile">PPTX 직접 업로드</label>
+        <input id="pptxFile" type="file" accept=".pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation" />
+        <div class="hint">링크 접근이 막히면 Google Slides에서 PPTX로 다운로드한 파일을 업로드해 주세요.</div>
+      </section>
+
+      <div id="status" class="status">준비됨
+링크 또는 PPTX를 넣고 기획안 분석하기를 눌러 주세요.</div>
+
+      <div class="actions">
+        <button id="convertButton" class="primary" type="button">기획안 분석하기</button>
+        <button id="createButton" class="primary" type="button" disabled>피그마에 생성</button>
+        <button id="wireframeButton" class="primary wide" type="button">와이어프레임 만들기</button>
+      </div>
+
+      <div class="advanced-area">
+        <details class="advanced">
+          <summary>고급 설정</summary>
+          <section class="field">
+            <label for="proxyUrl">Slides 프록시 URL</label>
+            <input id="proxyUrl" type="text" placeholder="https://script.google.com/macros/s/.../exec" />
+            <div class="hint">기본 Apps Script 프록시가 자동 입력됩니다.</div>
+          </section>
+          <section class="field">
+            <label for="defaultProxyUrl">기본 프록시 URL</label>
+            <div class="copy-row">
+              <input id="defaultProxyUrl" type="text" readonly draggable="true" />
+              <button id="copyProxyButton" type="button">복사</button>
+            </div>
+          </section>
+        </details>
+      </div>
+    </section>
+
+    <aside class="preview-panel">
+      <div class="preview-heading">
+        <div class="heading-copy">
+          <h2>분석 정보</h2>
+          <span>분석 후 바로 표시됩니다</span>
+        </div>
+      </div>
+      <div id="previewEmpty" class="preview-empty">기획안 분석하기를 누르면 이 영역에 결과가 펼쳐집니다.</div>
+      <section id="preview" class="preview" aria-live="polite"></section>
+    </aside>
+  </main>
+  <button id="edgePreviewToggle" class="preview-edge-toggle" type="button" aria-label="분석 정보 보기"></button>
+
+  <script>
+    const slidesUrlInput = document.getElementById("slidesUrl");
+    const proxyUrlInput = document.getElementById("proxyUrl");
+    const defaultProxyUrlInput = document.getElementById("defaultProxyUrl");
+    const copyProxyButton = document.getElementById("copyProxyButton");
+    const pptxFileInput = document.getElementById("pptxFile");
+    const convertButton = document.getElementById("convertButton");
+    const createButton = document.getElementById("createButton");
+    const wireframeButton = document.getElementById("wireframeButton");
+    const edgePreviewToggle = document.getElementById("edgePreviewToggle");
+    const statusBox = document.getElementById("status");
+    const previewEmpty = document.getElementById("previewEmpty");
+    const preview = document.getElementById("preview");
+    const DEFAULT_SLIDES_PROXY_URL = "https://script.google.com/macros/s/AKfycbzfFL2armto1dnb2L__Dg4_AlLTid-G9jOM-SVFyHdoBY7XhTBJfmfXhiB5YowW1aas/exec";
+    const READY_STATUS = "준비됨\n링크 또는 PPTX를 넣고 기획안 분석하기를 눌러 주세요.";
+    const UI_COMPACT_WIDTH = 430;
+    const UI_EXPANDED_WIDTH = 1040;
+    const UI_HEIGHT = 720;
+    const WIRE_ERROR = {
+      GOOGLE_SLIDES_ACCESS_BLOCKED: "GOOGLE_SLIDES_ACCESS_BLOCKED",
+      GOOGLE_SLIDES_EXPORT_FAILED: "GOOGLE_SLIDES_EXPORT_FAILED",
+      SLIDES_PROXY_STALE: "SLIDES_PROXY_STALE",
+      SLIDES_PROXY_TEXT_ONLY: "SLIDES_PROXY_TEXT_ONLY",
+      PPTX_COORDINATE_EXTRACTION_FAILED: "PPTX_COORDINATE_EXTRACTION_FAILED",
+      PPTX_UPLOAD_INVALID: "PPTX_UPLOAD_INVALID",
+      WIREFRAME_COORDINATE_MISSING: "WIREFRAME_COORDINATE_MISSING"
+    };
+    // OUTPUT_POLICY_START
+    const WIRE_OUTPUT_POLICY = {
+      "version": "2026-06-19-output-boundary-v1",
+      "targetWidthPx": 1080,
+      "layoutModes": {
+        "exact": "원본 좌표/SVG 기반 레이아웃",
+        "compat": "구버전 프록시 호환 목업"
+      },
+      "compat": {
+        "enabled": true,
+        "status": "compat-text-fallback",
+        "methodSuffix": "compat-layout",
+        "slidesWarning": "구버전 프록시가 좌표를 반환하지 않아 호환 목업으로 생성했습니다.",
+        "pptxWarning": "PPTX 좌표 요소를 찾지 못해 호환 목업으로 생성했습니다."
+      },
+      "messages": {
+        "coordinateMissing": "원본 슬라이드의 위치 좌표/SVG 구조를 읽지 못해 와이어프레임 생성을 중단했습니다.\nGoogle Slides 링크 권한, Apps Script 프록시, 또는 PPTX 업로드 파일을 확인해 주세요."
+      },
+      "styles": {
+        "rootBackground": "#FFFFFF",
+        "canvasBackground": "#FFFFFF",
+        "placeholderFill": "#D9D9D9",
+        "placeholderOpacity": 0.82,
+        "imageOpacity": 0.42,
+        "rootTopGapPx": 60,
+        "slideGapPx": 96,
+        "rootBottomGapPx": 60
+      }
+    };
+    // OUTPUT_POLICY_END
+
+    let currentAnalysis = null;
+    let convertedDeck = null;
+    let selectedSource = "";
+    let isPreviewExpanded = false;
+    let requestCount = 0;
+    const pendingRequests = {};
+
+    const storedProxyUrl = normalizeProxyUrl(readStoredValue("slidesProxyUrl"));
+    proxyUrlInput.value = storedProxyUrl || DEFAULT_SLIDES_PROXY_URL;
+    defaultProxyUrlInput.value = DEFAULT_SLIDES_PROXY_URL;
+    if (!storedProxyUrl) writeStoredValue("slidesProxyUrl", DEFAULT_SLIDES_PROXY_URL);
+
+    proxyUrlInput.addEventListener("input", () => {
+      writeStoredValue("slidesProxyUrl", normalizeProxyUrl(proxyUrlInput.value.trim()));
+    });
+
+    defaultProxyUrlInput.addEventListener("focus", () => {
+      defaultProxyUrlInput.select();
+    });
+
+    copyProxyButton.addEventListener("click", async () => {
+      await copyDefaultProxyUrl();
+    });
+
+    setReadyStatus();
+
+    slidesUrlInput.addEventListener("input", () => {
+      resetAnalysisState();
+      const hasLink = Boolean(slidesUrlInput.value.trim());
+      selectedSource = hasLink ? "link" : getSelectedPptxFile() ? "pptx" : "";
+      if (hasLink) {
+        setStatus("Google Slides 링크가 입력되었습니다.\n기획안 분석하기를 눌러 주세요.", "ok");
+      } else if (getSelectedPptxFile()) {
+        setStatus("PPTX 파일이 선택되어 있습니다.\n기획안 분석하기를 눌러 주세요.", "ok");
+      } else {
+        setReadyStatus();
+      }
+    });
+
+    slidesUrlInput.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      convertSlidesLink();
+    });
+
+    pptxFileInput.addEventListener("change", async () => {
+      resetAnalysisState();
+      const file = getSelectedPptxFile();
+      selectedSource = file ? "pptx" : slidesUrlInput.value.trim() ? "link" : "";
+      if (file) {
+        setStatus("PPTX 파일이 선택되었습니다.\n기획안 분석하기를 눌러 주세요.", "ok");
+      } else if (slidesUrlInput.value.trim()) {
+        setStatus("Google Slides 링크가 입력되어 있습니다.\n기획안 분석하기를 눌러 주세요.", "ok");
+      } else {
+        setReadyStatus();
+      }
+    });
+
+    convertButton.addEventListener("click", async () => {
+      await analyzeSelectedSource();
+    });
+
+    edgePreviewToggle.addEventListener("click", () => {
+      setPreviewExpanded(!isPreviewExpanded);
+    });
+
+    createButton.addEventListener("click", () => {
+      if (!currentAnalysis) return;
+      setStatus("새 피그마 페이지에 분석안을 생성하는 중입니다.");
+      parent.postMessage({
+        pluginMessage: {
+          type: "create-analysis",
+          analysis: currentAnalysis
+        }
+      }, "*");
+    });
+
+    wireframeButton.addEventListener("click", async () => {
+      await createWireframeFromSelectedSource();
+    });
+
+    window.onmessage = (event) => {
+      const message = event.data.pluginMessage;
+      if (!message) return;
+      if (message.type === "created") {
+        const pageName = message.pageName ? `\n페이지: ${message.pageName}` : "";
+        setStatus(`완료되었습니다. 새 페이지에 분석안을 생성했습니다.${pageName}`, "ok");
+      }
+      if (message.type === "wireframe-created") {
+        setBusy(false);
+        const pageName = message.pageName ? `\n페이지: ${message.pageName}` : "";
+        const countText = message.slideCount ? `\n총 ${message.slideCount}개 슬라이드를 와이어프레임으로 만들었습니다.` : "";
+        setStatus(`완료되었습니다. 새 페이지에 와이어프레임을 생성했습니다.${pageName}${countText}`, "ok");
+      }
+      if (message.type === "slides-text") {
+        const request = pendingRequests[message.requestId];
+        if (!request) return;
+        delete pendingRequests[message.requestId];
+        request.resolve(message);
+      }
+      if (message.type === "slides-converted") {
+        const request = pendingRequests[message.requestId];
+        if (!request) return;
+        delete pendingRequests[message.requestId];
+        request.resolve(message);
+      }
+      if (message.type === "pptx-uploaded") {
+        const request = pendingRequests[message.requestId];
+        if (!request) return;
+        delete pendingRequests[message.requestId];
+        request.resolve(message);
+      }
+      if (message.type === "slides-fetch-error") {
+        const request = pendingRequests[message.requestId];
+        if (!request) return;
+        delete pendingRequests[message.requestId];
+        request.reject(errorFromPluginMessage(message, "Google Slides 링크에서 텍스트를 읽지 못했습니다."));
+      }
+      if (message.type === "slides-convert-error") {
+        const request = pendingRequests[message.requestId];
+        if (!request) return;
+        delete pendingRequests[message.requestId];
+        request.reject(errorFromPluginMessage(message, "Google Slides 링크를 PPTX로 변환하지 못했습니다."));
+      }
+      if (message.type === "pptx-upload-error") {
+        const request = pendingRequests[message.requestId];
+        if (!request) return;
+        delete pendingRequests[message.requestId];
+        request.reject(errorFromPluginMessage(message, "업로드한 PPTX 파일을 읽지 못했습니다."));
+      }
+      if (message.type === "error") {
+        setBusy(false);
+        setStatus(formatUserError(errorFromPluginMessage(message, "생성 중 오류가 발생했습니다.")), "error");
+      }
+    };
+
+    async function analyzeSelectedSource() {
+      const file = getSelectedPptxFile();
+      const slidesUrl = slidesUrlInput.value.trim();
+
+      if (selectedSource === "pptx" && file) {
+        await uploadPptxFile(file);
+        return;
+      }
+
+      if (selectedSource === "link" && slidesUrl) {
+        await convertSlidesLink();
+        return;
+      }
+
+      if (slidesUrl) {
+        selectedSource = "link";
+        await convertSlidesLink();
+        return;
+      }
+
+      if (file) {
+        selectedSource = "pptx";
+        await uploadPptxFile(file);
+        return;
+      }
+
+      setReadyStatus();
+    }
+
+    async function convertSlidesLink() {
+      const slidesUrl = slidesUrlInput.value.trim();
+
+      if (!slidesUrl) {
+        setReadyStatus();
+        return;
+      }
+
+      let slidesInfo;
+      try {
+        slidesInfo = parseGoogleSlidesUrl(slidesUrl);
+        slidesInfo.proxyUrl = normalizeProxyUrl(proxyUrlInput.value.trim()) || DEFAULT_SLIDES_PROXY_URL;
+      } catch (error) {
+        setStatus(error.message, "error");
+        return;
+      }
+
+      setBusy(true, "analysis");
+      resetAnalysisState();
+      setStatus("기획안 분석 중...\nApps Script 프록시로 Google Slides 텍스트를 읽고 있습니다.");
+
+      try {
+        const result = await requestSlidesText(slidesInfo);
+        const sourceText = result.text;
+
+        if (!sourceText) {
+          throw new Error("슬라이드는 열렸지만 분석할 텍스트를 찾지 못했습니다. 슬라이드가 이미지로만 구성되어 있으면 분석할 수 없습니다.");
+        }
+
+        convertedDeck = {
+          text: sourceText,
+          referenceSlideImages: result.referenceSlideImages || [],
+          referenceSlideHeroText: result.referenceSlideHeroText || "",
+          wireframeSlides: result.wireframeSlides || [],
+          wireframeDataStatus: result.wireframeDataStatus || "",
+          proxyVersion: result.proxyVersion || "",
+          sourceName: result.sourceName || slidesInfo.sourceName,
+          sourceUrl: slidesUrl,
+          method: result.method || "slides-link",
+          viaProxy: Boolean(result.viaProxy)
+        };
+        analyzeConvertedDeck();
+      } catch (error) {
+        const helpText = /프록시|Apps Script|script\.google/i.test(error.message)
+          ? "Apps Script 웹앱 배포 권한이 '모든 사용자'인지, 그리고 배포 계정이 해당 슬라이드를 볼 수 있는지 확인해 주세요."
+          : "공유 설정이 \"링크가 있는 모든 사용자 보기\"인지 확인해 주세요.";
+        setStatus(`${error.message}\n${helpText}`, "error");
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    async function uploadPptxFile(file) {
+      if (!/\.pptx$/i.test(file.name)) {
+        setStatus("PPTX 파일만 업로드할 수 있습니다.", "error");
+        return;
+      }
+
+      setBusy(true, "analysis");
+      resetAnalysisState();
+      setStatus("기획안 분석 중...\n업로드한 PPTX 파일에서 슬라이드 텍스트를 읽고 있습니다.");
+
+      try {
+        const result = await requestUploadedPptx(file);
+        const sourceText = result.text;
+
+        if (!sourceText) {
+          throw new Error("PPTX 파일은 읽었지만 슬라이드 텍스트를 찾지 못했습니다. 슬라이드가 이미지로만 구성되어 있으면 분석할 수 없습니다.");
+        }
+
+        convertedDeck = {
+          text: sourceText,
+          referenceSlideImages: result.referenceSlideImages || [],
+          referenceSlideHeroText: result.referenceSlideHeroText || "",
+          wireframeSlides: result.wireframeSlides || [],
+          wireframeDataStatus: result.wireframeDataStatus || "",
+          proxyVersion: result.proxyVersion || "",
+          sourceName: result.sourceName || file.name,
+          sourceUrl: file.name,
+          method: result.method || "pptx-upload",
+          viaProxy: false
+        };
+        analyzeConvertedDeck();
+      } catch (error) {
+        setStatus(error.message, "error");
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    function analyzeConvertedDeck() {
+      if (!convertedDeck || !convertedDeck.text) {
+        setStatus("먼저 기획안 분석하기를 완료해 주세요.", "error");
+        return;
+      }
+
+      currentAnalysis = analyzePromotionText(convertedDeck.text, convertedDeck.sourceName);
+      currentAnalysis.referenceSlideImages = convertedDeck.referenceSlideImages || [];
+      currentAnalysis.mainReferenceHeroText = convertedDeck.referenceSlideHeroText || currentAnalysis.mainReferenceHeroText || "";
+      currentAnalysis.sourceNote = sourceNoteForMethod(convertedDeck.method);
+      currentAnalysis.sourceUrl = convertedDeck.sourceUrl;
+      renderPreview(currentAnalysis);
+      createButton.disabled = false;
+      setStatus(`${currentAnalysis.sourceNote}\n피그마에 생성 버튼을 누르면 새 페이지에 배치됩니다.`, "ok");
+    }
+
+    const GoogleSlidesLinkModule = {
+      async loadForWireframe(slidesUrl) {
+        const slidesInfo = parseGoogleSlidesUrl(slidesUrl);
+        const proxyUrls = wireframeProxyUrls();
+        let proxyResult = null;
+        let proxyError = null;
+        let conversionResult = null;
+        let conversionError = null;
+        let textOnlyResult = null;
+        let textOnlySeen = false;
+
+        setStatus("와이어프레임용 기획안을 읽는 중입니다.\n원본 슬라이드 좌표와 텍스트 크기를 먼저 추출하고 있습니다.");
+        for (const proxyUrl of proxyUrls) {
+          try {
+            const candidateSlidesInfo = { ...slidesInfo, proxyUrl };
+            proxyResult = await requestSlidesText(candidateSlidesInfo);
+            if (WireframeDataModule.hasCoordinateSlides(proxyResult.wireframeSlides)) {
+              return this.toDeck(proxyResult, slidesInfo, slidesUrl, "slides-link");
+            }
+            if (isTextOnlyWireframeResult(proxyResult)) {
+              textOnlySeen = true;
+              textOnlyResult = textOnlyResult || proxyResult;
+              logWireframeDataIssue("slides-proxy-text-only", proxyResult, { proxyUrl });
+            }
+          } catch (error) {
+            proxyError = proxyError || error;
+          }
+        }
+
+        try {
+          conversionResult = await requestPptxConversion(slidesInfo, 90000);
+          if (WireframeDataModule.hasCoordinateSlides(conversionResult.wireframeSlides)) {
+            return this.toDeck(conversionResult, slidesInfo, slidesUrl, "pptx-layout", proxyResult);
+          }
+          if (isTextOnlyWireframeResult(conversionResult)) {
+            textOnlySeen = true;
+            textOnlyResult = textOnlyResult || conversionResult;
+            logWireframeDataIssue("slides-conversion-text-only", conversionResult);
+          }
+        } catch (error) {
+          conversionError = error;
+          if (error && error.code === WIRE_ERROR.PPTX_COORDINATE_EXTRACTION_FAILED && !textOnlySeen) throw error;
+          if (textOnlySeen) return this.toFallbackDeck(textOnlyResult || proxyResult || conversionResult, slidesInfo, slidesUrl, conversionError || proxyError);
+          throw conversionError || proxyError || error;
+        }
+
+        if (conversionResult && WireframeDataModule.hasCoordinateSlides(conversionResult.wireframeSlides)) {
+          return this.toDeck(conversionResult, slidesInfo, slidesUrl, "visual-layout", proxyResult);
+        }
+        if (textOnlySeen) return this.toFallbackDeck(textOnlyResult || proxyResult || conversionResult, slidesInfo, slidesUrl, conversionError || proxyError);
+        throw conversionError || proxyError || createClientError(WIRE_ERROR.WIREFRAME_COORDINATE_MISSING, wireframeCoordinateErrorMessage());
+      },
+      toFallbackDeck(result, slidesInfo, slidesUrl, downstreamError) {
+        const text = result && result.text || "";
+        if (!text) throw slidesProxyTextOnlyError(result, downstreamError);
+        logWireframeDataIssue("wireframe-compat-text-fallback", result, {
+          downstream: downstreamError && downstreamError.message || ""
+        });
+        return {
+          text,
+          referenceSlideImages: result.referenceSlideImages || [],
+          referenceSlideHeroText: result.referenceSlideHeroText || "",
+          wireframeSlides: buildTextFallbackWireframeSlides(text),
+          wireframeDataStatus: wireframeCompatPolicy("status", "compat-text-fallback"),
+          proxyVersion: result.proxyVersion || "",
+          sourceName: result.sourceName || slidesInfo.sourceName,
+          sourceUrl: slidesUrl,
+          method: `${result.method || "slides-link"}+${wireframeCompatPolicy("methodSuffix", "compat-layout")}`,
+          viaProxy: Boolean(result.viaProxy),
+          compatMode: true,
+          warning: wireframeCompatPolicy("slidesWarning", "구버전 프록시가 좌표를 반환하지 않아 호환 목업으로 생성했습니다.")
+        };
+      },
+      toDeck(result, slidesInfo, slidesUrl, methodFallback, previousResult) {
+        const previous = previousResult || {};
+        return {
+          text: result.text || previous.text || "",
+          referenceSlideImages: result.referenceSlideImages || previous.referenceSlideImages || [],
+          referenceSlideHeroText: result.referenceSlideHeroText || previous.referenceSlideHeroText || "",
+          wireframeSlides: result.wireframeSlides || [],
+          wireframeDataStatus: result.wireframeDataStatus || previous.wireframeDataStatus || "",
+          proxyVersion: result.proxyVersion || previous.proxyVersion || "",
+          sourceName: result.sourceName || slidesInfo.sourceName,
+          sourceUrl: slidesUrl,
+          method: result.method || methodFallback,
+          viaProxy: Boolean(result.viaProxy)
+        };
+      }
+    };
+
+    function wireframeProxyUrl() {
+      return wireframeProxyUrls()[0] || DEFAULT_SLIDES_PROXY_URL;
+    }
+
+    function wireframeProxyUrls() {
+      const custom = normalizeProxyUrl(proxyUrlInput.value.trim());
+      const urls = [];
+      if (custom && isTrustedProxyUrl(custom)) urls.push(custom);
+      urls.push(DEFAULT_SLIDES_PROXY_URL);
+      return urls.filter((url, index) => url && urls.indexOf(url) === index);
+    }
+
+    const PptxUploadModule = {
+      async loadForWireframe(file) {
+        const result = await requestUploadedPptx(file);
+        if (!WireframeDataModule.hasCoordinateSlides(result.wireframeSlides)) {
+          logWireframeDataIssue("pptx-coordinate-missing", result, { fileName: file && file.name || "" });
+          if (result.text) {
+            return {
+              text: result.text,
+              referenceSlideImages: result.referenceSlideImages || [],
+              referenceSlideHeroText: result.referenceSlideHeroText || "",
+              wireframeSlides: buildTextFallbackWireframeSlides(result.text),
+              wireframeDataStatus: "compat-text-fallback",
+              proxyVersion: "",
+              sourceName: result.sourceName || file.name,
+              sourceUrl: file.name,
+              method: `${result.method || "pptx-upload"}+${wireframeCompatPolicy("methodSuffix", "compat-layout")}`,
+              viaProxy: false,
+              compatMode: true,
+              warning: wireframeCompatPolicy("pptxWarning", "PPTX 좌표 요소를 찾지 못해 호환 목업으로 생성했습니다.")
+            };
+          }
+          throw createClientError(WIRE_ERROR.PPTX_COORDINATE_EXTRACTION_FAILED, "PPTX는 읽었지만 원본 슬라이드의 좌표 요소를 찾지 못했습니다.");
+        }
+        return {
+          text: result.text,
+          referenceSlideImages: result.referenceSlideImages || [],
+          referenceSlideHeroText: result.referenceSlideHeroText || "",
+          wireframeSlides: result.wireframeSlides || [],
+          wireframeDataStatus: result.wireframeDataStatus || "",
+          proxyVersion: result.proxyVersion || "",
+          sourceName: result.sourceName || file.name,
+          sourceUrl: file.name,
+          method: result.method || "pptx-upload",
+          viaProxy: false
+        };
+      }
+    };
+
+    const WireframeDataModule = {
+      buildDeck(deck) {
+        return buildWireframeDeck(deck);
+      },
+      hasCoordinateSlides(slides) {
+        return hasCoordinateWireframeSlides(slides);
+      },
+      normalizeSlides(slides) {
+        return normalizeWireframeSlides(slides);
+      },
+      assertCoordinateDeck(deck) {
+        if (!this.hasCoordinateSlides(deck && deck.wireframeSlides)) {
+          throw createClientError(WIRE_ERROR.WIREFRAME_COORDINATE_MISSING, wireframeCoordinateErrorMessage());
+        }
+        return deck;
+      }
+    };
+
+    const WireframeRegressionModule = {
+      sampleSlides() {
+        return [{
+          number: 1,
+          width: 1000,
+          height: 1000,
+          text: "상단바\n타이틀\n카드\n버튼",
+          elements: [
+            { type: "shape", x: 0, y: 0, w: 1000, h: 60, text: "성장지원금    맛보기 패키지    첫만남 특별할인", groupId: "topbar", zIndex: 0 },
+            { type: "text", x: 300, y: 120, w: 400, h: 80, text: "대표 타이틀", groupId: "title", zIndex: 1 },
+            { type: "shape", x: 120, y: 260, w: 300, h: 160, text: "카드 안 텍스트", groupId: "card-1", zIndex: 2 },
+            { type: "shape", x: 120, y: 460, w: 260, h: 72, text: "버튼 안 텍스트", groupId: "button-1", zIndex: 3 },
+            { type: "image", x: 560, y: 260, w: 220, h: 160, text: "", groupId: "image-1", zIndex: 4 }
+          ]
+        }];
+      },
+      run(options = {}) {
+        const failures = [];
+        const assert = (condition, label) => {
+          if (!condition) failures.push(label);
+        };
+        const slides = this.sampleSlides();
+        const deck = { sourceName: "regression", sourceUrl: "test", method: "test", text: "테스트", wireframeSlides: slides };
+        const built = WireframeDataModule.buildDeck(deck);
+        const elements = built.slides[0].normalizedSlideElements;
+        const byGroup = (groupId) => elements.find((element) => element.groupId === groupId);
+        const markerOnlyDeck = WireframeDataModule.buildDeck({
+          sourceName: "marker-only",
+          sourceUrl: "test",
+          method: "test",
+          text: "테스트",
+          wireframeSlides: [{ ...slides[0], text: "메인페이지" }]
+        });
+
+        assert(WireframeDataModule.hasCoordinateSlides(slides), "Google Slides 링크 접근 가능: 좌표 slideElements 통과");
+        assert(formatUserError(createClientError(WIRE_ERROR.GOOGLE_SLIDES_ACCESS_BLOCKED, "blocked")).includes("Google Slides 요청"), "Google Slides 링크 접근 차단: 별도 안내 문구");
+        assert(PptxUploadModule && WireframeDataModule.hasCoordinateSlides(slides), "PPTX 업로드 정상: 좌표 요소 통과");
+        assert(wireframeSourcePriority("pptx", true, true) === "pptx", "PPTX 선택 시 링크보다 PPTX 우선");
+        assert(wireframeSourcePriority("link", true, true) === "pptx", "PPTX 파일이 있으면 링크 선택 상태여도 PPTX 우선");
+        assert(wireframeSourcePriority("link", false, true) === "link", "PPTX 파일이 없으면 Google Slides 링크 사용");
+        const previousProxyUrl = proxyUrlInput.value;
+        proxyUrlInput.value = "https://example.workers.dev";
+        const proxyCandidates = wireframeProxyUrls();
+        assert(proxyCandidates[0] === "https://example.workers.dev" && proxyCandidates.includes(DEFAULT_SLIDES_PROXY_URL), "와이어프레임 프록시는 사용자 설정 후 기본 Apps Script로 회귀");
+        proxyUrlInput.value = previousProxyUrl;
+        const previousDeck = convertedDeck;
+        const previousSource = selectedSource;
+        convertedDeck = { sourceUrl: "sample.pptx", wireframeSlides: slides };
+        selectedSource = "pptx";
+        assert(reusableWireframeDeckForCurrentSource({ name: "sample.pptx" }, "") === convertedDeck, "분석 단계 좌표 데이터 재사용");
+        convertedDeck = { sourceUrl: "text-only.pptx", text: "텍스트만 있음", wireframeSlides: [] };
+        selectedSource = "pptx";
+        assert(reusableWireframeDeckForCurrentSource({ name: "text-only.pptx" }, "") === null, "분석 단계 text-only 데이터는 와이어프레임에 재사용하지 않음");
+        convertedDeck = previousDeck;
+        selectedSource = previousSource;
+        assert(formatUserError(createClientError(WIRE_ERROR.PPTX_COORDINATE_EXTRACTION_FAILED, "no coords")).includes("PPTX는 읽었지만"), "PPTX 좌표 추출 실패: 별도 안내 문구");
+        const textOnlyProxyError = slidesProxyTextOnlyError({ method: "text-export-proxy", wireframeDataStatus: "text-only", wireframeSlides: [], text: "텍스트" }, new Error("Failed to fetch"));
+        assert(textOnlyProxyError.code === WIRE_ERROR.SLIDES_PROXY_TEXT_ONLY && formatUserError(textOnlyProxyError).includes("텍스트는 읽었지만 위치 좌표"), "프록시 text-only 응답: 권한 오류와 분리");
+        const staleProxyError = slidesProxyTextOnlyError({ method: "slides-app", wireframeDataStatus: "text-only", wireframeSlides: [], text: "텍스트", proxyVersion: "" }, new Error("Failed to fetch"));
+        assert(staleProxyError.code === WIRE_ERROR.SLIDES_PROXY_STALE && formatUserError(staleProxyError).includes("Apps Script 프록시 URL이 구버전"), "구버전 Apps Script 프록시: 별도 안내 문구");
+        assert(built.slides.length === 1 && elements.length === 5, "좌표 있는 slideElements 정상 렌더링 입력 구성");
+
+        let textOnlyStopped = false;
+        try {
+          WireframeDataModule.buildDeck({
+            sourceName: "text-only",
+            sourceUrl: "test",
+            method: "text-only",
+            text: "Slide 1\n텍스트만 있음\n이 데이터만으로는 위치를 알 수 없음",
+            wireframeSlides: []
+          });
+        } catch (error) {
+          textOnlyStopped = error && error.code === WIRE_ERROR.WIREFRAME_COORDINATE_MISSING;
+        }
+        assert(textOnlyStopped, "텍스트-only 데이터일 때 와이어프레임 생성 중단");
+
+        const staleCompatDeck = GoogleSlidesLinkModule.toFallbackDeck(
+          { method: "slides-app", wireframeDataStatus: "text-only", wireframeSlides: [], text: "Slide 1\n혜택 2\n성장지원금", proxyVersion: "" },
+          { sourceName: "stale-proxy" },
+          "https://docs.google.com/presentation/d/sample/edit",
+          new Error("Failed to fetch")
+        );
+        assert(staleCompatDeck.compatMode && staleCompatDeck.wireframeSlides.length === 1, "구버전 Apps Script text-only 오류는 호환 목업으로 전환");
+
+        const compatDeck = WireframeDataModule.buildDeck({
+          sourceName: "compat",
+          sourceUrl: "test",
+          method: "slides-app+compat-layout",
+          wireframeDataStatus: "compat-text-fallback",
+          compatMode: true,
+          text: "Slide 1\n혜택 2\n성장지원금\n맛보기 패키지\n실패 없는 선택을 위한\nBEST 강의 맛보기 패키지",
+          wireframeSlides: buildTextFallbackWireframeSlides("Slide 1\n혜택 2\n성장지원금\n맛보기 패키지\n실패 없는 선택을 위한\nBEST 강의 맛보기 패키지")
+        });
+        assert(compatDeck.compatMode && compatDeck.slides.length === 1, "구버전 프록시 text-only는 호환 목업으로 생성");
+
+        const svgDeck = WireframeDataModule.buildDeck({
+          sourceName: "svg",
+          sourceUrl: "test",
+          method: "published-svg",
+          text: "Slide 1\nSVG",
+          wireframeSlides: [{
+            number: 1,
+            width: 960,
+            height: 540,
+            elements: [{ type: "svg", x: 0, y: 0, w: 960, h: 540, svg: "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"960\" height=\"540\"><text x=\"20\" y=\"40\">원본</text></svg>" }]
+          }]
+        });
+        assert(svgDeck.slides.length === 1 && svgDeck.slides[0].normalizedSlideElements[0].type === "svg", "공개 SVG 슬라이드는 좌표 기반 입력으로 유지");
+
+        const image = byGroup("image-1");
+        assert(image && image.type === "image" && image.x === 560 && image.y === 260 && image.w === 220 && image.h === 160, "이미지 없는 요소는 같은 위치 placeholder 유지");
+        assert(markerOnlyDeck.slides.length === 1, "메인페이지 마커 뒤가 비어도 좌표 슬라이드 전체 삭제 방지");
+        assert(byGroup("topbar").x === 0 && byGroup("topbar").y === 0, "상단바 텍스트 위치 유지");
+        assert(byGroup("card-1").x === 120 && byGroup("card-1").y === 260, "카드 텍스트 위치 유지");
+        assert(byGroup("button-1").x === 120 && byGroup("button-1").y === 460, "버튼 텍스트 위치 유지");
+
+        if (failures.length) {
+          console.warn("[wireframe-regression] FAIL", failures);
+        } else if (!options.silent) {
+          console.info("[wireframe-regression] PASS", {
+            cases: 22,
+            note: "좌표/SVG 우선 + 구버전 프록시 호환 목업 계약이 유지되고 있습니다."
+          });
+        }
+        return { ok: failures.length === 0, failures };
+      }
+    };
+
+    window.runWireframeRegressionChecks = function () {
+      return WireframeRegressionModule.run({ silent: false });
+    };
+    setTimeout(() => WireframeRegressionModule.run({ silent: true }), 0);
+
+    async function createWireframeFromSelectedSource() {
+      setBusy(true, "wireframe");
+      setStatus("와이어프레임용 기획안을 읽는 중입니다.\n분석안 생성 없이 슬라이드 레이아웃만 추출합니다.");
+
+      let sourceDeck;
+      try {
+        sourceDeck = await loadDeckForWireframeOnly();
+      } catch (error) {
+        setStatus(formatUserError(error), "error");
+        setBusy(false);
+        return;
+      }
+
+      if (!sourceDeck) {
+        setStatus(wireframeCoordinateErrorMessage(), "error");
+        setBusy(false);
+        return;
+      }
+
+      let wireframeDeck;
+      try {
+        wireframeDeck = WireframeDataModule.buildDeck(sourceDeck);
+      } catch (error) {
+        setStatus(formatUserError(error), "error");
+        setBusy(false);
+        return;
+      }
+
+      const layoutMode = sourceDeck.compatMode
+        ? wireframeLayoutMode("compat", "구버전 프록시 호환 목업")
+        : wireframeLayoutMode("exact", "원본 좌표/SVG 기반 레이아웃");
+      const warning = sourceDeck.warning ? `\n${sourceDeck.warning}` : "";
+      setStatus(`와이어프레임 생성 중...\n${wireframeDeck.slides.length}개 슬라이드를 ${layoutMode}으로 피그마에 배치하고 있습니다.${warning}`);
+      parent.postMessage({
+        pluginMessage: {
+          type: "create-wireframe",
+          deck: wireframeDeck
+        }
+      }, "*");
+    }
+
+    async function loadDeckForWireframeOnly() {
+      const file = getSelectedPptxFile();
+      const slidesUrl = slidesUrlInput.value.trim();
+      const reusableDeck = reusableWireframeDeckForCurrentSource(file, slidesUrl);
+      if (reusableDeck) return reusableDeck;
+
+      const source = wireframeSourcePriority(selectedSource, Boolean(file), Boolean(slidesUrl));
+      if (source === "pptx") return await PptxUploadModule.loadForWireframe(file);
+      if (source === "link") return await GoogleSlidesLinkModule.loadForWireframe(slidesUrl);
+
+      throw new Error("Google Slides 링크 또는 PPTX 파일을 먼저 넣어 주세요.");
+    }
+
+    function reusableWireframeDeckForCurrentSource(file, slidesUrl) {
+      if (!convertedDeck) return null;
+      if (!WireframeDataModule.hasCoordinateSlides(convertedDeck.wireframeSlides)) return null;
+      const sourceUrl = String(convertedDeck.sourceUrl || "");
+      if (selectedSource === "pptx" && file && sourceUrl === file.name) return convertedDeck;
+      if (selectedSource === "link" && slidesUrl && sourceUrl === slidesUrl) return convertedDeck;
+      if (!selectedSource && file && sourceUrl === file.name) return convertedDeck;
+      if (!selectedSource && slidesUrl && sourceUrl === slidesUrl) return convertedDeck;
+      return null;
+    }
+
+    function wireframeSourcePriority(source, hasFile, hasSlidesUrl) {
+      if (hasFile) return "pptx";
+      if (hasSlidesUrl) return "link";
+      return "";
+    }
+
+    function buildWireframeDeck(deck) {
+      const sourceName = deck.sourceName || "기획안";
+      const sourceSlides = Array.isArray(deck.wireframeSlides) && deck.wireframeSlides.length
+        ? deck.wireframeSlides
+        : [];
+      const geometrySlides = normalizeWireframeSlides(sourceSlides);
+      if (!geometrySlides.length) {
+        logWireframeDataIssue("wireframe-coordinate-missing-build", deck, {
+          sourceName,
+          hasText: Boolean(deck.text)
+        });
+        throw createClientError(WIRE_ERROR.WIREFRAME_COORDINATE_MISSING, wireframeCoordinateErrorMessage());
+      }
+      const markerIndex = geometrySlides.findIndex(isExactMainPageMarkerSlide);
+      const markerSlides = markerIndex >= 0 ? geometrySlides.slice(markerIndex + 1) : geometrySlides;
+      const usableGeometrySlides = markerSlides.some((slide) => slide.normalizedSlideElements && slide.normalizedSlideElements.length)
+        ? markerSlides
+        : geometrySlides;
+      const slides = usableGeometrySlides.filter((slide) => slide.normalizedSlideElements && slide.normalizedSlideElements.length);
+      if (!slides.length) {
+        logWireframeDataIssue("wireframe-coordinate-missing-after-marker", deck, {
+          sourceName,
+          sourceSlideCount: geometrySlides.length
+        });
+        throw createClientError(WIRE_ERROR.WIREFRAME_COORDINATE_MISSING, wireframeCoordinateErrorMessage());
+      }
+      return {
+        sourceName,
+        sourceUrl: deck.sourceUrl || "",
+        method: deck.method || "",
+        text: deck.text || "",
+        wireframeDataStatus: deck.wireframeDataStatus || "",
+        compatMode: Boolean(deck.compatMode),
+        slides
+      };
+    }
+
+    function wireframeCoordinateErrorMessage() {
+      return wireframeOutputMessage(
+        "coordinateMissing",
+        "원본 슬라이드의 위치 좌표/SVG 구조를 읽지 못해 와이어프레임 생성을 중단했습니다.\nGoogle Slides 링크 권한, Apps Script 프록시, 또는 PPTX 업로드 파일을 확인해 주세요."
+      );
+    }
+
+    function wireframeOutputMessage(key, fallback) {
+      const messages = WIRE_OUTPUT_POLICY && WIRE_OUTPUT_POLICY.messages || {};
+      return messages[key] || fallback;
+    }
+
+    function wireframeLayoutMode(key, fallback) {
+      const layoutModes = WIRE_OUTPUT_POLICY && WIRE_OUTPUT_POLICY.layoutModes || {};
+      return layoutModes[key] || fallback;
+    }
+
+    function wireframeCompatPolicy(key, fallback) {
+      const compat = WIRE_OUTPUT_POLICY && WIRE_OUTPUT_POLICY.compat || {};
+      return compat[key] === undefined || compat[key] === null || compat[key] === "" ? fallback : compat[key];
+    }
+
+    function isTextOnlyWireframeResult(result) {
+      return Boolean(result && result.text && !WireframeDataModule.hasCoordinateSlides(result.wireframeSlides));
+    }
+
+    function slidesProxyTextOnlyError(result, downstreamError) {
+      const method = result && result.method ? result.method : "unknown";
+      const status = result && result.wireframeDataStatus ? result.wireframeDataStatus : "text-only";
+      const proxyVersion = result && result.proxyVersion ? result.proxyVersion : "";
+      const slideCount = Array.isArray(result && result.wireframeSlides) ? result.wireframeSlides.length : 0;
+      const downstream = downstreamError && downstreamError.message ? downstreamError.message : "";
+      const staleAppsScript = method === "slides-app" && !proxyVersion && slideCount === 0;
+      const details = [
+        `method=${method}`,
+        `wireframeDataStatus=${status}`,
+        `coordinateSlideCount=${slideCount}`,
+        `proxyVersion=${proxyVersion || "missing"}`
+      ];
+      if (downstream && !staleAppsScript) details.push(`directExport=${downstream}`);
+      logWireframeDataIssue("slides-proxy-text-only-final", result, { downstream });
+      return createClientError(
+        staleAppsScript ? WIRE_ERROR.SLIDES_PROXY_STALE : WIRE_ERROR.SLIDES_PROXY_TEXT_ONLY,
+        "Google Slides 링크에서 텍스트는 읽었지만 위치 좌표가 함께 오지 않았습니다.",
+        details.join(" / ")
+      );
+    }
+
+    function logWireframeDataIssue(reason, result, extra = {}) {
+      try {
+        console.warn("[wireframe]", reason, {
+          method: result && result.method || "",
+          wireframeDataStatus: result && result.wireframeDataStatus || "",
+          proxyVersion: result && result.proxyVersion || "",
+          wireframeSlideCount: Array.isArray(result && result.wireframeSlides) ? result.wireframeSlides.length : 0,
+          hasText: Boolean(result && result.text),
+          ...extra
+        });
+      } catch (error) {
+        // Console logging is best-effort in the Figma plugin UI runtime.
+      }
+    }
+
+    function createClientError(code, message, details) {
+      const error = new Error(message || "");
+      error.code = code || "";
+      error.details = details || "";
+      return error;
+    }
+
+    function errorFromPluginMessage(message, fallbackMessage) {
+      return createClientError(
+        message && message.code,
+        message && message.message || fallbackMessage,
+        message && message.details || ""
+      );
+    }
+
+    function isSlidesAccessOrExportError(error) {
+      const code = error && error.code || "";
+      return code === WIRE_ERROR.GOOGLE_SLIDES_ACCESS_BLOCKED || code === WIRE_ERROR.GOOGLE_SLIDES_EXPORT_FAILED;
+    }
+
+    function formatUserError(error) {
+      const code = error && error.code || "";
+      const details = error && error.details ? `\n상세: ${error.details}` : "";
+      if (code === WIRE_ERROR.GOOGLE_SLIDES_ACCESS_BLOCKED) {
+        return `Google Slides 요청이 보안 정책 또는 권한 문제로 차단되었습니다.\n플러그인을 다시 import한 뒤 시도하거나, 조직 보안 정책에서 외부 export 접근이 막혀 있는지 확인해 주세요.${details}`;
+      }
+      if (code === WIRE_ERROR.GOOGLE_SLIDES_EXPORT_FAILED) {
+        return `Google Slides를 PPTX로 변환하지 못했습니다.\n공유 권한이 '링크가 있는 모든 사용자 보기'인지 확인하거나, Google Slides에서 PPTX로 다운로드한 파일을 업로드해 주세요.${details}`;
+      }
+      if (code === WIRE_ERROR.SLIDES_PROXY_STALE) {
+        return `현재 고급 설정의 Apps Script 프록시 URL이 구버전 배포본입니다.\n플러그인 UI는 최신이지만, 해당 URL의 서버 코드가 좌표 추출/preview fallback을 아직 지원하지 않아 text-only로 멈췄습니다.\ngoogle-apps-script-proxy.gs 최신 코드로 Apps Script를 새 버전 배포한 뒤 그 /exec URL을 고급 설정에 넣어 주세요. 바로 진행해야 하면 Google Slides에서 PPTX로 다운로드한 파일을 업로드해 주세요.${details}`;
+      }
+      if (code === WIRE_ERROR.SLIDES_PROXY_TEXT_ONLY) {
+        return `Google Slides 텍스트는 읽었지만 위치 좌표가 함께 오지 않았습니다.\n이건 링크 공유 권한 오류라기보다 현재 프록시/변환 경로가 text-only 데이터만 반환하는 상태입니다.\n고급 설정의 Apps Script 프록시를 최신 코드로 다시 배포하거나, Google Slides에서 PPTX로 다운로드한 파일을 업로드해 주세요.${details}`;
+      }
+      if (code === WIRE_ERROR.PPTX_COORDINATE_EXTRACTION_FAILED) {
+        return `PPTX는 읽었지만 원본 슬라이드의 좌표 요소를 찾지 못했습니다.\n슬라이드가 통이미지인지, PPTX 안에 텍스트/도형/이미지가 개별 요소로 남아 있는지 확인해 주세요.${details}`;
+      }
+      if (code === WIRE_ERROR.PPTX_UPLOAD_INVALID) {
+        return `업로드한 파일이 PPTX가 아니거나 읽을 수 없는 파일입니다.\nGoogle Slides에서 .pptx로 다시 다운로드한 파일을 업로드해 주세요.${details}`;
+      }
+      if (code === WIRE_ERROR.WIREFRAME_COORDINATE_MISSING) {
+        return wireframeCoordinateErrorMessage();
+      }
+      return error && error.message ? error.message : "오류가 발생했습니다.";
+    }
+
+    function hasVisualWireframeSlides(slides) {
+      return Array.isArray(slides) && slides.some((slide) => {
+        return Array.isArray(slide.elements) && slide.elements.some((element) => {
+          if (!element) return false;
+          if (element.type === "svg" && element.svg) return true;
+          if (element.type === "image") return true;
+          const hasBox = Number(element.w) > 0 && Number(element.h) > 0;
+          const hasPosition = Number(element.x) !== 0 || Number(element.y) !== 0;
+          return hasBox && (hasPosition || element.fill || element.stroke);
+        });
+      });
+    }
+
+    function hasFullSlideSvgWireframeSlides(slides) {
+      return Array.isArray(slides) && slides.some((slide) => {
+        return Array.isArray(slide.elements) && slide.elements.some((element) => {
+          return element && element.type === "svg" && String(element.svg || "").includes("<svg");
+        });
+      });
+    }
+
+    function hasStructuredWireframeSlides(slides) {
+      return Array.isArray(slides) && slides.some((slide) => {
+        return Array.isArray(slide.elements) && slide.elements.some((element) => {
+          return element && element.type && element.type !== "svg" && Number(element.w) > 0 && Number(element.h) > 0;
+        });
+      });
+    }
+
+    function hasCoordinateWireframeSlides(slides) {
+      return Array.isArray(slides) && slides.some((slide) => {
+        const elements = Array.isArray(slide.normalizedSlideElements) ? slide.normalizedSlideElements : slide.elements;
+        return Array.isArray(elements) && elements.some(hasCoordinateWireframeElement);
+      });
+    }
+
+    function hasCoordinateWireframeElement(element) {
+      if (!element) return false;
+      if (element.fallbackLayout) return false;
+      const w = Number(element.w);
+      const h = Number(element.h);
+      if (!Number.isFinite(w) || !Number.isFinite(h) || w <= 0 || h <= 0) return false;
+      const x = Number(element.x);
+      const y = Number(element.y);
+      if (!Number.isFinite(x) || !Number.isFinite(y)) return false;
+      if (element.type === "svg") return String(element.svg || "").includes("<svg");
+      return /^(text|image|shape|line|ellipse|table)$/i.test(String(element.type || ""));
+    }
+
+    function normalizeWireframeSlides(slides) {
+      return Array.isArray(slides) ? slides.map((slide, index) => {
+        const lines = wireframeTextLines(slide.lines || slide.text || "");
+        const title = slide.title && !isNonHeroText(slide.title) ? slide.title : "";
+        const sourceElements = Array.isArray(slide.normalizedSlideElements) ? slide.normalizedSlideElements : slide.elements;
+        const normalizedSlideElements = Array.isArray(sourceElements)
+          ? sourceElements.filter(hasCoordinateWireframeElement)
+          : [];
+        return {
+          number: slide.number || index + 1,
+          title: lines[0] || title || `Slide ${slide.number || index + 1}`,
+          text: lines.join("\n"),
+          lines,
+          width: slide.width,
+          height: slide.height,
+          normalizedSlideElements,
+          elements: normalizedSlideElements
+        };
+      }).filter((slide) => slide.normalizedSlideElements.length) : [];
+    }
+
+    function wireframeTextLines(value) {
+      return String(value || "")
+        .replace(/\r/g, "\n")
+        .replace(/\u2028|\u2029/g, "\n")
+        .split("\n")
+        .map(cleanWireframeOutputLine)
+        .filter((line) => !isNonHeroText(line))
+        .filter(Boolean);
+    }
+
+    function cleanWireframeOutputLine(line) {
+      return String(line || "")
+        .replace(/[ \t]+/g, " ")
+        .replace(/(?:디자인\s*코멘트|코멘트|comment|수정\s*요청|변경\s*요청)\s*[:：]?.*$/i, "")
+        .replace(/(?:메인\s*배경|타이머\s*배경|배경\s*컬러|컬러\s*반전|붉은\s*계열|긴급한\s*느낌|부탁드|부탁\s*드립니다).*$/i, "")
+        .replace(/(?:디자인|레이아웃|색상|컬러|위치|크기|폰트|간격|정렬).*(?:해주세요|해\s*주세요).*$/i, "")
+        .replace(/[-–—ㆍ·:：,\s]+$/g, "")
+        .trim();
+    }
+
+    function buildTextFallbackWireframeSlides(text) {
+      const blocks = parseSlideBlocks(text);
+      const sourceBlocks = blocks.length ? blocks : [{ number: 1, text }];
+      return sourceBlocks
+        .map((block, index) => createTextFallbackWireframeSlide(block, index))
+        .filter(Boolean);
+    }
+
+    const WF_PX = 12192000 / 1080;
+    const WF_MARGIN = Math.round(WF_PX * 60);
+    const WF_GAP = Math.round(WF_PX * 30);
+    const WF_INNER_GAP = Math.round(WF_PX * 16);
+    const WF_FONT_GAP = 14;
+    const WF_TEXT_IMAGE_GAP = 20;
+    const WF_BADGE_FONT = 16;
+    const WF_SUBTITLE_FONT = 18;
+    const WF_TITLE_FONT = 28;
+    const WF_BODY_FONT = 15;
+    const WF_HEADER_HEIGHT = 48;
+    const WF_BADGE_HEIGHT = 44;
+    const WF_CHECK_ROW_HEIGHT = 42;
+    const WF_RIBBON_HEIGHT = 42;
+    const WF_TICKET_HEIGHT = 150;
+
+    function createTextFallbackWireframeSlide(block, index) {
+      const lines = wireframeTextLines(block.text || block.lines || "");
+      if (!lines.length) return null;
+
+      const width = 12192000;
+      const title = lines[0] || `Slide ${block.number || index + 1}`;
+      const layout = fallbackLayoutType(lines, index);
+      const content = fallbackContentGroups(lines);
+      const height = fallbackSlideHeight(layout, lines.length, content);
+      const elements = buildFallbackLayoutElements(layout, content, height);
+
+      return {
+        number: block.number || index + 1,
+        title,
+        text: lines.join("\n"),
+        lines,
+        fallbackLayout: true,
+        width,
+        height,
+        elements
+      };
+    }
+
+    function fallbackLayoutType(lines, index) {
+      if (benefitGridFallbackModel(lines).isBenefitGrid) return "benefitGrid";
+      if (dealGridFallbackModel(lines).isDealGrid) return "dealGrid";
+      const offerModel = offerFallbackModel(lines);
+      if (
+        offerModel.variant === "cardList" ||
+        offerModel.checkItems.length >= 3 ||
+        offerModel.percent ||
+        offerModel.couponTitle ||
+        offerModel.badge
+      ) {
+        return "offer";
+      }
+      return "source";
+    }
+
+    function fallbackContentGroups(lines) {
+      const titleCount = Math.min(lines.length, lines[0] && lines[0].length <= 10 && lines[1] ? 3 : 2);
+      const title = lines.slice(0, titleCount).join("\n");
+      const subtitle = lines.slice(titleCount, titleCount + 2).join("\n");
+      const remaining = lines.slice(titleCount + 2);
+      return {
+        lines,
+        title,
+        subtitle,
+        remaining,
+        body: remaining.slice(0, 8),
+        cards: remaining.slice(8, 22),
+        chips: lines.slice(-10)
+      };
+    }
+
+    function fallbackSlideHeight(type, lineCount, content) {
+      if (type === "source") return wfPx(sourceStructureHeight(sourceStructureModel(content.lines)));
+      if (type === "dealGrid") return wfPx(dealGridHeight(dealGridFallbackModel(content.lines)));
+      if (type === "benefitGrid") return wfPx(benefitGridHeight(benefitGridFallbackModel(content.lines)));
+      if (type === "offer") return fallbackOfferHeight(content);
+      const base = fallbackBaseHeight(type);
+      const flowRows = Math.ceil(Math.max(0, content.remaining.length) / 2);
+      const flowHeight = flowRows * WF_PX * 48 + Math.max(0, flowRows - 1) * WF_INNER_GAP + WF_GAP * 2;
+      return base + WF_GAP + Math.max(WF_PX * 180, flowHeight) + WF_MARGIN;
+    }
+
+    function fallbackOfferHeight(content) {
+      const model = offerFallbackModel(content.lines);
+      if (model.variant === "cardList") return wfPx(offerCardListHeight(model));
+      if (model.checkItems.length >= 3 && !model.percent) return wfPx(680);
+      return wfPx(820);
+    }
+
+    function fallbackBaseHeight(type) {
+      if (type === "metric") return Math.round(WF_PX * 690);
+      if (type === "notice") return Math.round(WF_PX * 600);
+      if (type === "deadline") return Math.round(WF_PX * 610);
+      if (type === "offer") return Math.round(WF_PX * 650);
+      if (type === "grid") return Math.round(WF_PX * 650);
+      if (type === "editorial") return Math.round(WF_PX * 640);
+      return Math.round(WF_PX * 620);
+    }
+
+    function buildFallbackLayoutElements(type, content, height) {
+      const elements = [fallbackShape(0, 0, 12192000, height, "#FFFFFF")];
+      if (type === "source") buildSourceStructureFallback(elements, content, height);
+      else if (type === "dealGrid") buildDealGridFallback(elements, content, height);
+      else if (type === "benefitGrid") buildBenefitGridFallback(elements, content, height);
+      else if (type === "notice") buildNoticeFallback(elements, content, height);
+      else if (type === "deadline") buildDeadlineFallback(elements, content);
+      else if (type === "metric") buildMetricFallback(elements, content);
+      else if (type === "offer") buildOfferFallback(elements, content, height);
+      else if (type === "grid") buildGridFallback(elements, content, height);
+      else if (type === "split") buildSplitFallback(elements, content);
+      else if (type === "editorial") buildEditorialFallback(elements, content);
+      else buildHeroFallback(elements, content);
+      return elements;
+    }
+
+    function fallbackOriginalTextHeight(lines) {
+      const safeLines = Array.isArray(lines) ? lines.filter(Boolean) : [];
+      const lineHeight = 34;
+      const blockGap = 18;
+      const base = 140;
+      const contentHeight = safeLines.reduce((total, line) => {
+        return total + Math.max(lineHeight, Math.ceil(String(line || "").length / 30) * lineHeight) + blockGap;
+      }, 0);
+      return wfPx(Math.max(620, base + contentHeight));
+    }
+
+    function buildOriginalTextFallback(elements, content, height) {
+      const lines = (content.lines || []).map((line) => String(line || "").trim()).filter(Boolean);
+      elements.push(fallbackShape(0, 0, 12192000, height, "#FFFFFF"));
+      elements.push(fallbackText("텍스트 기반 미리보기", wfPx(60), wfPx(40), wfPx(960), wfPx(24), 12, "#777777", "LEFT"));
+
+      let y = 105;
+      const x = 880000;
+      const width = 10400000;
+      lines.forEach((line, index) => {
+        const isFirst = index === 0;
+        const isHeadline = isFirst || /🔥|블랙|프라이데이|특가|할인|쿠폰|이벤트|혜택|OFF|%/i.test(line);
+        const fontSize = isFirst ? 25 : isHeadline ? 20 : 15;
+        const color = isFirst ? "#050505" : isHeadline ? "#111111" : "#333333";
+        const lineCount = Math.max(1, Math.ceil(line.length / (isHeadline ? 22 : 34)));
+        const heightPx = Math.max(isHeadline ? 44 : 30, lineCount * (fontSize + 10));
+        elements.push(fallbackText(line, x, wfPx(y), width, wfPx(heightPx), fontSize, color, "LEFT"));
+        y += heightPx + (isHeadline ? 18 : 10);
+      });
+
+      return elements;
+    }
+
+    function buildNoticeFallback(elements, content, height) {
+      elements.push(fallbackShape(0, 0, 12192000, 3450000, "#050505"));
+      elements.push(fallbackText(content.title, 2300000, 980000, 7600000, 1250000, 34, "#FFFFFF", "CENTER"));
+      elements.push(fallbackText(content.subtitle, 3200000, 2280000, 5600000, 580000, 18, "#FFFFFF", "CENTER"));
+      elements.push(fallbackText("NOTICE", 0, 4050000, 12192000, 360000, 18, "#111111", "CENTER"));
+      addCardRow(elements, content.body.concat(content.cards), 1250000, 5200000, 9700000, 900000, 4);
+      if (height > 7800000) {
+        addImageBand(elements, 1250000, 6500000, 9700000, 760000);
+      }
+      return elements;
+    }
+
+    function buildHeroFallback(elements, content) {
+      elements.push(fallbackShape(0, 0, 12192000, 4450000, "#050505"));
+      elements.push(fallbackText(content.subtitle, 3300000, 980000, 5600000, 520000, 18, "#FFFFFF", "CENTER"));
+      elements.push(fallbackText(content.title, 2300000, 2200000, 7600000, 1100000, 44, "#FFFFFF", "CENTER"));
+      addChipRow(elements, content.chips, 2550000, 3880000, "#333333", "#FFFFFF");
+      elements.push(fallbackText(content.body.slice(0, 2).join("\n"), 3000000, 5050000, 6200000, 760000, 20, "#111111", "CENTER"));
+      addImageBand(elements, 1000000, 5950000, 10200000, 560000);
+      return elements;
+    }
+
+    function buildSplitFallback(elements, content) {
+      elements.push(fallbackShape(720000, 760000, 5000000, 5100000, "#050505", "round"));
+      elements.push(fallbackText(content.title, 1150000, 1700000, 4100000, 1200000, 36, "#FFFFFF", "LEFT"));
+      elements.push(fallbackText(content.subtitle, 1200000, 3180000, 3900000, 650000, 18, "#FFFFFF", "LEFT"));
+      elements.push(fallbackShape(6250000, 760000, 5200000, 2500000, "#E8E8E8", "round"));
+      addCardRow(elements, content.cards.length ? content.cards : content.body, 6250000, 3720000, 5200000, 1500000, 3);
+      addChipRow(elements, content.chips, 1150000, 5120000, "#F1F1F1", "#111111");
+      return elements;
+    }
+
+    function buildEditorialFallback(elements, content) {
+      elements.push(fallbackShape(740000, 700000, 10700000, 900000, "#F2F2F2", "round"));
+      elements.push(fallbackText(content.title, 1080000, 880000, 6100000, 420000, 24, "#111111", "LEFT"));
+      elements.push(fallbackText(content.subtitle, 7200000, 880000, 3300000, 420000, 15, "#555555", "RIGHT"));
+      elements.push(fallbackShape(740000, 1980000, 5000000, 3450000, "#E2E2E2", "round"));
+      addStackedText(elements, content.body, 6250000, 1980000, 5000000, 1700000);
+      addCardRow(elements, content.cards, 6250000, 4020000, 5000000, 1400000, 2);
+      return elements;
+    }
+
+    function buildSourceStructureFallback(elements, content, height) {
+      const model = sourceStructureModel(content.lines);
+      elements.push(fallbackShape(0, 0, 12192000, height, "#FFFFFF"));
+
+      if (model.header.length) addSourceHeaderBar(elements, model.header, 0);
+      let y = model.header.length ? WF_HEADER_HEIGHT + WF_TEXT_IMAGE_GAP : 60;
+
+      if (model.badge) {
+        addBenefitBadge(elements, model.badge, wfPx(y));
+        y += WF_BADGE_HEIGHT + WF_TEXT_IMAGE_GAP;
+      }
+
+      if (model.intro.length) {
+        const introHeight = offerTextBlockHeight(WF_SUBTITLE_FONT, model.intro.length);
+        addCenteredFallbackText(elements, model.intro.join("\n"), wfPx(y), wfPx(560), WF_SUBTITLE_FONT, "#111111", introHeight);
+        y += introHeight + WF_FONT_GAP;
+      }
+
+      if (model.title.length) {
+        const titleHeight = offerTextBlockHeight(WF_TITLE_FONT, model.title.length);
+        addCenteredFallbackText(elements, model.title.join("\n"), wfPx(y), wfPx(680), WF_TITLE_FONT, "#050505", titleHeight);
+        y += titleHeight + WF_TEXT_IMAGE_GAP;
+      }
+
+      if (model.body.length) {
+        const bodyHeight = offerTextBlockHeight(WF_BODY_FONT, model.body.length);
+        addCenteredFallbackText(elements, model.body.join("\n"), wfPx(y), wfPx(680), WF_BODY_FONT, "#222222", bodyHeight);
+        y += bodyHeight + WF_TEXT_IMAGE_GAP;
+      }
+
+      if (model.checkItems.length) {
+        addBenefitChecklist(elements, model.checkItems, wfPx(y));
+        const itemCount = Math.min(model.checkItems.length, 5);
+        y += itemCount * WF_CHECK_ROW_HEIGHT + Math.max(0, itemCount - 1) * WF_FONT_GAP + WF_TEXT_IMAGE_GAP;
+      }
+
+      if (model.modules.length) {
+        const grid = addSourceModuleGrid(elements, model.modules, wfPx(y));
+        y += grid.height + WF_TEXT_IMAGE_GAP;
+      }
+
+      if (model.notes.length) {
+        const noteHeight = offerTextBlockHeight(13, model.notes.length);
+        addCenteredFallbackText(elements, model.notes.join("\n"), wfPx(y), wfPx(700), 13, "#555555", noteHeight);
+        y += noteHeight + WF_TEXT_IMAGE_GAP;
+      }
+
+      if (model.cta.length) {
+        addWideFallbackCta(elements, model.cta.join("\n"), wfPx(Math.max(y, Math.round(height / WF_PX) - 130)));
+      }
+
+      return elements;
+    }
+
+    function dealGridFallbackModel(lines) {
+      const source = (lines || []).map((line) => String(line || "").trim()).filter(Boolean);
+      const headerInfo = extractCampaignHeader(source);
+      const auxiliary = extractCampaignAuxiliaryLines(source);
+      let working = source.filter((line, index) => !headerInfo.indexes.has(index) && !auxiliary.indexes.has(index) && !isCampaignHeaderClusterLine(line));
+
+      const badgeIndex = working.findIndex(isCampaignBadgeLine);
+      const badge = badgeIndex >= 0 ? working[badgeIndex] : "";
+      if (badgeIndex >= 0) working = working.filter((_, index) => index !== badgeIndex);
+
+      const split = splitCampaignDealPreface(working);
+      const cards = buildDealGridCards(split.cardLines);
+      const signalCount = source.filter(isDealGridSignalLine).length;
+      const hasDealKeyword = source.some((line) => /오늘의\s*특가|강의명|연사명|정상가|90%\s*OFF|99%|00만\s*원/i.test(line));
+      const hasGridDensity = source.filter((line) => /강의명|연사명|정상가|오늘의\s*특가|OFF|->|→|00만\s*원/i.test(line)).length >= 5;
+      const isDealGrid = cards.length >= 4 && hasDealKeyword && (signalCount >= 5 || hasGridDensity);
+
+      return {
+        isDealGrid,
+        header: headerInfo.header,
+        badge,
+        intro: split.intro,
+        title: split.title,
+        cards,
+        notes: auxiliary.notes,
+        cta: auxiliary.cta
+      };
+    }
+
+    function benefitGridFallbackModel(lines) {
+      const source = (lines || []).map((line) => String(line || "").trim()).filter(Boolean);
+      const headerInfo = extractCampaignHeader(source);
+      const auxiliary = extractCampaignAuxiliaryLines(source);
+      let working = source.filter((line, index) => !headerInfo.indexes.has(index) && !auxiliary.indexes.has(index) && !isCampaignHeaderClusterLine(line));
+
+      const badgeIndex = working.findIndex(isCampaignBadgeLine);
+      const badge = badgeIndex >= 0 ? working[badgeIndex] : "";
+      if (badgeIndex >= 0) working = working.filter((_, index) => index !== badgeIndex);
+
+      const split = splitBenefitGridPreface(working);
+      const cards = sortBenefitGridCards(buildBenefitGridCards(split.cardLines));
+      const benefitSignalCount = source.filter(isBenefitGridSignalLine).length;
+      const hasBenefitKeyword = source.some((line) => /쿠폰팩|전\s*회원|카테고리|프리미엄|시그니처|얼리버드|쏩니다|다운받기/i.test(line));
+      const isBenefitGrid = cards.length >= 3 && hasBenefitKeyword && benefitSignalCount >= 4;
+
+      return {
+        isBenefitGrid,
+        header: headerInfo.header,
+        badge,
+        intro: split.intro,
+        title: split.title,
+        body: split.body,
+        cards,
+        notes: auxiliary.notes,
+        cta: auxiliary.cta
+      };
+    }
+
+    function dealGridHeight(model) {
+      const top = model.header.length ? WF_HEADER_HEIGHT + WF_TEXT_IMAGE_GAP : 56;
+      const badge = model.badge ? WF_BADGE_HEIGHT + WF_TEXT_IMAGE_GAP : 0;
+      const intro = model.intro.length ? fallbackWrappedTextHeight(model.intro, WF_SUBTITLE_FONT, 34) + WF_FONT_GAP : 0;
+      const title = model.title.length ? fallbackWrappedTextHeight(model.title, WF_TITLE_FONT, 24) + WF_TEXT_IMAGE_GAP : 0;
+      const rows = Math.ceil(Math.max(1, model.cards.length) / 3);
+      const cards = rows * 108 + Math.max(0, rows - 1) * WF_FONT_GAP + WF_TEXT_IMAGE_GAP;
+      const cta = model.cta.length ? 78 + WF_TEXT_IMAGE_GAP : 0;
+      const notes = model.notes.length ? fallbackWrappedTextHeight(model.notes.slice(0, 4), 12, 54) + WF_TEXT_IMAGE_GAP : 0;
+      return Math.max(640, top + badge + intro + title + cards + cta + notes + 64);
+    }
+
+    function benefitGridHeight(model) {
+      const top = model.header.length ? WF_HEADER_HEIGHT + WF_TEXT_IMAGE_GAP : 56;
+      const badge = model.badge ? WF_BADGE_HEIGHT + WF_TEXT_IMAGE_GAP : 0;
+      const intro = model.intro.length ? fallbackWrappedTextHeight(model.intro, WF_SUBTITLE_FONT, 31) + WF_FONT_GAP : 0;
+      const title = model.title.length ? fallbackWrappedTextHeight(model.title, WF_TITLE_FONT, 22) + WF_TEXT_IMAGE_GAP : 0;
+      const body = model.body.length ? fallbackWrappedTextHeight(model.body.slice(0, 2), WF_BODY_FONT, 38) + WF_TEXT_IMAGE_GAP : 0;
+      const cards = 2 * 104 + WF_FONT_GAP + WF_TEXT_IMAGE_GAP;
+      const cta = model.cta.length ? 78 + WF_TEXT_IMAGE_GAP : 0;
+      const notes = model.notes.length ? fallbackWrappedTextHeight(model.notes.slice(0, 4), 12, 54) + WF_TEXT_IMAGE_GAP : 0;
+      return Math.max(700, top + badge + intro + title + body + cards + cta + notes + 64);
+    }
+
+    function buildDealGridFallback(elements, content, height) {
+      const model = dealGridFallbackModel(content.lines);
+      elements.push(fallbackShape(0, 0, 12192000, height, "#FFFFFF"));
+      if (model.header.length) addCampaignHeaderBar(elements, model.header, 0);
+      let y = model.header.length ? WF_HEADER_HEIGHT + WF_TEXT_IMAGE_GAP : 56;
+
+      if (model.badge) {
+        addCampaignBadgePill(elements, compactCampaignBadge(model.badge), wfPx(y));
+        y += WF_BADGE_HEIGHT + WF_TEXT_IMAGE_GAP;
+      }
+
+      if (model.intro.length) {
+        const introHeight = fallbackWrappedTextHeight(model.intro, WF_SUBTITLE_FONT, 34);
+        addCenteredFallbackText(elements, model.intro.join("\n"), wfPx(y), wfPx(640), WF_SUBTITLE_FONT, "#111111", introHeight);
+        y += introHeight + WF_FONT_GAP;
+      }
+
+      if (model.title.length) {
+        const titleHeight = fallbackWrappedTextHeight(model.title, WF_TITLE_FONT, 24);
+        addCenteredFallbackText(elements, model.title.join("\n"), wfPx(y), wfPx(720), WF_TITLE_FONT, "#050505", titleHeight);
+        y += titleHeight + WF_TEXT_IMAGE_GAP;
+      }
+
+      const grid = addDealGridCards(elements, model.cards, wfPx(y));
+      y += grid.height + WF_TEXT_IMAGE_GAP;
+
+      if (model.cta.length) {
+        addCompactFallbackCta(elements, model.cta.join("\n"), wfPx(y));
+        y += wfPx(78 + WF_TEXT_IMAGE_GAP);
+      }
+
+      if (model.notes.length) {
+        const noteLines = model.notes.slice(0, 4);
+        const noteHeight = fallbackWrappedTextHeight(noteLines, 12, 54);
+        addCenteredFallbackText(elements, noteLines.join("\n"), wfPx(y), wfPx(690), 12, "#555555", noteHeight);
+      }
+
+      return elements;
+    }
+
+    function buildBenefitGridFallback(elements, content, height) {
+      const model = benefitGridFallbackModel(content.lines);
+      elements.push(fallbackShape(0, 0, 12192000, height, "#FFFFFF"));
+      if (model.header.length) addCampaignHeaderBar(elements, model.header, 0);
+      let y = model.header.length ? WF_HEADER_HEIGHT + WF_TEXT_IMAGE_GAP : 56;
+
+      if (model.badge) {
+        addCampaignBadgePill(elements, compactCampaignBadge(model.badge), wfPx(y));
+        y += WF_BADGE_HEIGHT + WF_TEXT_IMAGE_GAP;
+      }
+
+      if (model.intro.length) {
+        const introHeight = fallbackWrappedTextHeight(model.intro, WF_SUBTITLE_FONT, 31);
+        addCenteredFallbackText(elements, model.intro.join("\n"), wfPx(y), wfPx(620), WF_SUBTITLE_FONT, "#111111", introHeight);
+        y += introHeight + WF_FONT_GAP;
+      }
+
+      if (model.title.length) {
+        const titleHeight = fallbackWrappedTextHeight(model.title, WF_TITLE_FONT, 22);
+        addCenteredFallbackText(elements, model.title.join("\n"), wfPx(y), wfPx(710), WF_TITLE_FONT, "#050505", titleHeight);
+        y += titleHeight + WF_TEXT_IMAGE_GAP;
+      }
+
+      if (model.body.length) {
+        const bodyLines = model.body.slice(0, 2);
+        const bodyHeight = fallbackWrappedTextHeight(bodyLines, WF_BODY_FONT, 38);
+        addCenteredFallbackText(elements, bodyLines.join("\n"), wfPx(y), wfPx(620), WF_BODY_FONT, "#333333", bodyHeight);
+        y += bodyHeight + WF_TEXT_IMAGE_GAP;
+      }
+
+      const grid = addBenefitGridCards(elements, model.cards, wfPx(y));
+      y += grid.height + WF_TEXT_IMAGE_GAP;
+
+      if (model.cta.length) {
+        addCompactFallbackCta(elements, model.cta.join("\n"), wfPx(y));
+        y += wfPx(78 + WF_TEXT_IMAGE_GAP);
+      }
+
+      if (model.notes.length) {
+        const noteLines = model.notes.slice(0, 4);
+        const noteHeight = fallbackWrappedTextHeight(noteLines, 12, 54);
+        addCenteredFallbackText(elements, noteLines.join("\n"), wfPx(y), wfPx(720), 12, "#555555", noteHeight);
+      }
+
+      return elements;
+    }
+
+    function extractCampaignHeader(lines) {
+      const indexes = new Set();
+      const header = [];
+      for (let index = 0; index < lines.length; index += 1) {
+        const line = lines[index];
+        const bracketValues = splitHeaderLine(line);
+        const bracketCount = (String(line || "").match(/\[[^\]]+\]/g) || []).length;
+        if (bracketCount >= 2) {
+          bracketValues.forEach((value) => header.push(value));
+          indexes.add(index);
+          break;
+        }
+        if (index < 3 && isCampaignHeaderLine(line)) {
+          header.push(line);
+          indexes.add(index);
+          break;
+        }
+      }
+      return { header: header.slice(0, 5), indexes };
+    }
+
+    function extractCampaignAuxiliaryLines(lines) {
+      const indexes = new Set();
+      const cta = [];
+      const notes = [];
+      const values = (lines || []).map((line) => String(line || "").trim());
+
+      for (let index = 0; index < values.length; index += 1) {
+        const line = values[index];
+        if (!line) continue;
+        if (isSourceCtaLine(line)) {
+          cta.push(line);
+          indexes.add(index);
+          continue;
+        }
+        if (!isCampaignNoteLine(line)) continue;
+
+        const block = [line];
+        indexes.add(index);
+        let nextIndex = index + 1;
+        while (nextIndex < values.length && isCampaignNoteContinuationLine(values[nextIndex])) {
+          block.push(values[nextIndex]);
+          indexes.add(nextIndex);
+          nextIndex += 1;
+        }
+        notes.push(block.join("\n"));
+        index = nextIndex - 1;
+      }
+
+      return {
+        indexes,
+        cta: uniquePreserveOrder(cta),
+        notes: uniquePreserveOrder(notes)
+      };
+    }
+
+    function splitCampaignDealPreface(lines) {
+      const values = (lines || []).filter(Boolean);
+      if (!values.length) return { intro: [], title: [], cardLines: [] };
+      const titleIndex = values.findIndex(isCampaignDealTitleLine);
+      if (titleIndex >= 0) {
+        const intro = values.slice(0, titleIndex).filter((line) => !isDealGridSignalLine(line));
+        let end = titleIndex + 1;
+        while (end < values.length && end < titleIndex + 3 && isCampaignDealTitleContinuation(values[end])) end += 1;
+        return { intro, title: values.slice(titleIndex, end), cardLines: values.slice(end) };
+      }
+      return { intro: values.slice(0, 1), title: values.slice(1, 3), cardLines: values.slice(3) };
+    }
+
+    function splitBenefitGridPreface(lines) {
+      const values = (lines || []).filter(Boolean);
+      if (!values.length) return { intro: [], title: [], body: [], cardLines: [] };
+      const cardStart = findBenefitCardStart(values);
+      const preface = cardStart >= 0 ? values.slice(0, cardStart) : values.slice(0, Math.min(values.length, 4));
+      const cardLines = cardStart >= 0 ? values.slice(cardStart) : values.slice(preface.length);
+      const titleIndex = preface.findIndex((line) => /1년에|초특급|세일|전\s*강의/i.test(line));
+      if (titleIndex >= 0) {
+        return {
+          intro: preface.slice(0, titleIndex),
+          title: preface.slice(titleIndex, Math.min(preface.length, titleIndex + 2)).filter((line) => !/^전\s*회원/i.test(String(line || ""))),
+          body: preface.slice(titleIndex + 2),
+          cardLines
+        };
+      }
+      return { intro: preface.slice(0, 1), title: preface.slice(1, 3), body: preface.slice(3), cardLines };
+    }
+
+    function buildDealGridCards(lines) {
+      const values = (lines || [])
+        .map((line) => String(line || "").trim())
+        .filter((line) => line && !isCampaignNoteLine(line) && !isSourceCtaLine(line) && !isCampaignBadgeLine(line))
+        .filter((line) => !isCampaignDealTitleLine(line) && !isCampaignDealTitleContinuation(line));
+      const cards = [];
+      for (let index = 0; index < values.length; index += 1) {
+        const current = values[index];
+        const next = values[index + 1] || "";
+        const after = values[index + 2] || "";
+        if (isDealCardLabelLine(current) && next) {
+          cards.push({
+            label: current,
+            title: next,
+            detail: isDealCardDetailLine(after) ? after : ""
+          });
+          if (isDealCardDetailLine(after)) index += 2;
+          else index += 1;
+        } else if (isDealGridSignalLine(current)) {
+          cards.push({
+            label: "",
+            title: current,
+            detail: isDealCardDetailLine(next) ? next : ""
+          });
+          if (isDealCardDetailLine(next)) index += 1;
+        }
+      }
+
+      const minimumCount = values.filter(isDealGridSignalLine).length >= 5 ? 6 : cards.length;
+      while (cards.length < minimumCount) {
+        cards.push({ label: "강의명", title: "오늘의 특가", detail: "-> 00만 원" });
+      }
+      return cards.slice(0, 6);
+    }
+
+    function buildBenefitGridCards(lines) {
+      const values = (lines || [])
+        .map((line) => String(line || "").trim())
+        .filter((line) => line && !isCampaignNoteLine(line) && !isSourceCtaLine(line) && !isCampaignBadgeLine(line));
+      const cards = [];
+      const pendingCounts = [];
+
+      for (let index = 0; index < values.length; index += 1) {
+        const current = values[index];
+        if (/^\d+\s*장$/.test(current)) {
+          pendingCounts.push(current);
+          continue;
+        }
+        const next = values[index + 1] || "";
+        if (isBenefitGridLabelLine(current) && isBenefitGridValueLine(next)) {
+          const nextCount = values[index + 2] && /^\d+\s*장$/.test(values[index + 2]) ? values[index + 2] : "";
+          cards.push({ label: current, value: next, count: nextCount || pendingCounts.shift() || "" });
+          index += nextCount ? 2 : 1;
+        } else if (isBenefitGridValueLine(current)) {
+          const nextCount = next && /^\d+\s*장$/.test(next) ? next : "";
+          cards.push({ label: "", value: current, count: nextCount || pendingCounts.shift() || "" });
+          if (nextCount) index += 1;
+        }
+      }
+
+      if (cards.length < 3) {
+        const fallbackPairs = values.filter((line) => isBenefitGridLabelLine(line) || isBenefitGridValueLine(line));
+        for (let index = 0; index < fallbackPairs.length && cards.length < 4; index += 2) {
+          cards.push({ label: fallbackPairs[index] || "", value: fallbackPairs[index + 1] || "", count: pendingCounts.shift() || "" });
+        }
+      }
+
+      return cards.slice(0, 4);
+    }
+
+    function sortBenefitGridCards(cards) {
+      const values = (cards || []).slice();
+      const hasKnownOrder = values.filter((card) => benefitGridCardPriority(card) < 99).length >= 2;
+      if (!hasKnownOrder) return values;
+      return values.sort((a, b) => benefitGridCardPriority(a) - benefitGridCardPriority(b));
+    }
+
+    function benefitGridCardPriority(card) {
+      const value = `${card && card.label || ""} ${card && card.value || ""}`;
+      if (/전\s*카테고리|카테고리\s*적용/i.test(value)) return 1;
+      if (/프리미엄/i.test(value)) return 2;
+      if (/신규|얼리버드/i.test(value)) return 3;
+      if (/시그니처/i.test(value)) return 4;
+      return 99;
+    }
+
+    function addCampaignHeaderBar(elements, items, y) {
+      const values = items.filter(Boolean).slice(0, 5);
+      if (!values.length) return;
+      const h = wfPx(48);
+      elements.push(fallbackShape(0, y, 12192000, h, "#111111"));
+      const groupW = Math.min(12192000, wfPx(720));
+      const groupX = wfCenterX(groupW);
+      const itemW = Math.round(groupW / values.length);
+      values.forEach((value, index) => {
+        elements.push(fallbackText(value, groupX + itemW * index, y + wfPx(13), itemW, wfPx(22), 13, "#FFFFFF", "CENTER"));
+      });
+    }
+
+    function addCampaignBadgePill(elements, text, y) {
+      const value = String(text || "").trim();
+      const w = wfPx(Math.min(260, Math.max(120, value.length * 12 + 48)));
+      const h = wfPx(WF_BADGE_HEIGHT);
+      const x = wfCenterX(w);
+      elements.push(fallbackShape(x, y, w, h, "#666666", "round"));
+      elements.push(fallbackText(value, x + wfPx(14), y + wfPx(11), w - wfPx(28), wfPx(22), WF_BADGE_FONT, "#FFFFFF", "CENTER"));
+    }
+
+    function addDealGridCards(elements, cards, y) {
+      const values = (cards || []).slice(0, 6);
+      const count = Math.max(1, values.length);
+      const columns = count >= 5 ? 3 : count >= 3 ? 2 : 1;
+      const rows = Math.ceil(count / columns);
+      const gap = wfPx(WF_FONT_GAP);
+      const gridW = columns === 3 ? wfPx(790) : columns === 2 ? wfPx(560) : wfPx(270);
+      const cardW = Math.round((gridW - gap * (columns - 1)) / columns);
+      const cardH = wfPx(108);
+      const x0 = wfCenterX(gridW);
+
+      values.forEach((card, index) => {
+        const col = index % columns;
+        const row = Math.floor(index / columns);
+        const x = x0 + col * (cardW + gap);
+        const cy = y + row * (cardH + gap);
+        elements.push(fallbackShape(x, cy, cardW, cardH, "#D9D9D9", "round"));
+        const imageW = Math.round(cardW * 0.36);
+        const imageH = wfPx(76);
+        elements.push(fallbackShape(x + wfPx(12), cy + wfPx(16), imageW, imageH, "#BDBDBD", "round"));
+        const badgeSize = wfPx(32);
+        elements.push(fallbackEllipse(x + cardW - wfPx(44), cy + wfPx(12), badgeSize, badgeSize, "#BDBDBD"));
+        const textX = x + imageW + wfPx(24);
+        const textW = cardW - imageW - wfPx(38);
+        if (card.label) elements.push(fallbackText(card.label, textX, cy + wfPx(18), textW, wfPx(18), 11, "#333333", "LEFT"));
+        elements.push(fallbackText(card.title || "오늘의 특가", textX, cy + wfPx(card.label ? 39 : 28), textW, wfPx(34), 15, "#050505", "LEFT"));
+        if (card.detail) elements.push(fallbackText(card.detail, textX, cy + wfPx(74), textW, wfPx(18), 12, "#333333", "LEFT"));
+      });
+
+      return { height: rows * cardH + Math.max(0, rows - 1) * gap };
+    }
+
+    function addBenefitGridCards(elements, cards, y) {
+      const values = (cards || []).slice(0, 4);
+      const columns = 2;
+      const rows = Math.ceil(Math.max(1, values.length) / columns);
+      const gap = wfPx(WF_FONT_GAP);
+      const gridW = wfPx(640);
+      const cardW = Math.round((gridW - gap) / 2);
+      const cardH = wfPx(104);
+      const x0 = wfCenterX(gridW);
+
+      values.forEach((card, index) => {
+        const col = index % columns;
+        const row = Math.floor(index / columns);
+        const x = x0 + col * (cardW + gap);
+        const cy = y + row * (cardH + gap);
+        elements.push(fallbackShape(x, cy, cardW, cardH, "#D9D9D9", "round"));
+        const imageSize = wfPx(60);
+        elements.push(fallbackShape(x + cardW - imageSize - wfPx(16), cy + wfPx(22), imageSize, imageSize, "#BDBDBD", "round"));
+        if (card.count) {
+          const badgeSize = wfPx(46);
+          elements.push(fallbackEllipse(x + cardW - wfPx(66), cy - wfPx(18), badgeSize, badgeSize, "#777777"));
+          elements.push(fallbackText(card.count, x + cardW - wfPx(57), cy - wfPx(6), wfPx(28), wfPx(18), 13, "#FFFFFF", "CENTER"));
+        }
+        const textW = cardW - imageSize - wfPx(46);
+        if (card.label) elements.push(fallbackText(card.label, x + wfPx(18), cy + wfPx(18), textW, wfPx(20), 12, "#333333", "LEFT"));
+        elements.push(fallbackText(card.value || card.label || "혜택", x + wfPx(18), cy + wfPx(card.label ? 46 : 36), textW, wfPx(34), 22, "#050505", "LEFT"));
+      });
+
+      return { height: rows * cardH + Math.max(0, rows - 1) * gap };
+    }
+
+    function addCompactFallbackCta(elements, text, y) {
+      const w = wfPx(520);
+      const h = wfPx(58);
+      const x = wfCenterX(w);
+      elements.push(fallbackShape(x, y, w, h, "#EDEDED", "round"));
+      elements.push(fallbackText(String(text || "").replace(/\s*>?\s*$/, ""), x + wfPx(26), y + wfPx(18), w - wfPx(90), wfPx(20), 14, "#111111", "LEFT"));
+      elements.push(fallbackText("→", x + w - wfPx(58), y + wfPx(17), wfPx(28), wfPx(22), 18, "#111111", "CENTER"));
+    }
+
+    function findBenefitCardStart(lines) {
+      for (let index = 0; index < lines.length; index += 1) {
+        const tail = lines.slice(index, index + 12);
+        if (isBenefitGridLabelLine(lines[index]) && tail.filter(isBenefitGridSignalLine).length >= 4) return index;
+        if (/^\d+\s*장$/.test(String(lines[index] || "").trim()) && isBenefitGridLabelLine(lines[index + 1])) return index;
+      }
+      return -1;
+    }
+
+    function compactCampaignBadge(value) {
+      return String(value || "").replace(/[⚡🔥]/g, "").replace(/\s+/g, " ").trim();
+    }
+
+    function isCampaignHeaderClusterLine(line) {
+      return (String(line || "").match(/\[[^\]]+\]/g) || []).length >= 2;
+    }
+
+    function isCampaignHeaderLine(line) {
+      const value = String(line || "").replace(/\s+/g, " ").trim();
+      return value.length <= 42 && /\[[^\]]+\]/.test(value);
+    }
+
+    function isCampaignBadgeLine(line) {
+      const value = String(line || "").replace(/\s+/g, " ").trim();
+      return value.length <= 34 && /혜택\s*\d+|첫번째\s*혜택|두번째\s*혜택|첫\s*번째\s*혜택|두\s*번째\s*혜택|썸머\s*블프.*혜택/i.test(value);
+    }
+
+    function isCampaignDealTitleLine(line) {
+      const value = String(line || "").replace(/\s+/g, " ").trim();
+      if (!value || value.length > 42) return false;
+      if (/강의명|연사명|정상가|->|→|OFF/i.test(value)) return false;
+      return /한여름|블랙\s*프라이데이|역대급\s*할인|대개방|특가최대|할인으로\s*만나요|오직\s*썸머/i.test(value);
+    }
+
+    function isCampaignDealTitleContinuation(line) {
+      const value = String(line || "").replace(/\s+/g, " ").trim();
+      if (!value || value.length > 42) return false;
+      if (/강의명|연사명|정상가|->|→|OFF/i.test(value)) return false;
+      return /단\s*한\s*번|역대급|대개방|특가최대|할인으로|만나요|강의가\s*공개/i.test(value);
+    }
+
+    function isCampaignNoteLine(line) {
+      const value = String(line || "").trim();
+      return /^[※*]/.test(value) || /유의|주의|기간|수강권|구매|적용|소장|지급|확인|상세|다운로드|결제|이미지|6\.\d+|24\(수\)|23:59/i.test(value) && value.length > 20;
+    }
+
+    function isCampaignNoteContinuationLine(line) {
+      const value = String(line || "").replace(/\s+/g, " ").trim();
+      if (!value) return false;
+      if (/^[※*]/.test(value) || isSourceCtaLine(value) || isCampaignHeaderClusterLine(value) || isCampaignBadgeLine(value)) return false;
+      if (/^\d+\s*장$/.test(value) || isBenefitGridLabelLine(value) || isBenefitGridValueLine(value) || isDealGridSignalLine(value)) return false;
+      if (isCampaignDealTitleLine(value) || isCampaignDealTitleContinuation(value)) return false;
+      return value.length <= 80 && /태그|눌러|확인|주세요|됩니다|적용|조건|발급|유의사항|옵션|수강권|페이지|최상단/i.test(value);
+    }
+
+    function isDealGridSignalLine(line) {
+      const value = String(line || "").replace(/\s+/g, " ").trim();
+      return /강의명|연사명|정상가|오늘의\s*특가|하루|우릴\s*특가|무료\s*특가|90%\s*OFF|99%|00만\s*원|->|→|OFF/i.test(value);
+    }
+
+    function isDealCardLabelLine(line) {
+      const value = String(line || "").replace(/\s+/g, " ").trim();
+      return value.length <= 22 && /강의명|연사명|오픈|하루|정상가|블프한정/i.test(value) && !/%/.test(value);
+    }
+
+    function isDealCardDetailLine(line) {
+      const value = String(line || "").replace(/\s+/g, " ").trim();
+      return value.length <= 24 && /->|→|00만\s*원|OFF|정상가|할인/i.test(value);
+    }
+
+    function isBenefitGridSignalLine(line) {
+      const value = String(line || "").replace(/\s+/g, " ").trim();
+      return /전\s*카테고리|프리미엄|신규|얼리버드|시그니처|쿠폰팩|쿠폰|전\s*회원|쏩니다|다운받기|^\d+\s*장$|^\d+\s*만\s*원$|^\d{1,3}\s*%$|~\d{1,3}\s*%/i.test(value);
+    }
+
+    function isBenefitGridLabelLine(line) {
+      const value = String(line || "").replace(/\s+/g, " ").trim();
+      if (!value || value.length > 34) return false;
+      if (/^\d+\s*장$|^\d{1,3}\s*%$|^\d+\s*만\s*원$|~\d{1,3}\s*%/.test(value)) return false;
+      if (/할인한다고|해드립니다|초특급|세일|단\s*한\s*번|포함|쏩니다|쿠폰팩/i.test(value)) return false;
+      return /카테고리|프리미엄|신규|얼리버드|시그니처|전용|적용/i.test(value);
+    }
+
+    function isBenefitGridValueLine(line) {
+      const value = String(line || "").replace(/\s+/g, " ").trim();
+      return /^~?\d{1,3}\s*%$|^\d+\s*만\s*원$|쿠폰|할인/i.test(value);
+    }
+
+    function sourceStructureModel(lines) {
+      const source = (lines || []).map((line) => String(line || "").trim()).filter(Boolean);
+      const sourceBadgeIndex = source.findIndex(isSourceBadgeLine);
+      const top = sourceBadgeIndex >= 0 ? extractSourceHeaderAroundBadge(source, sourceBadgeIndex) : extractSourceTopHeader(source);
+      let working = source.filter((_, index) => !top.indexes.has(index));
+      const notes = [];
+      const cta = [];
+      working = working.filter((line) => {
+        if (isSourceCtaLine(line)) {
+          cta.push(line);
+          return false;
+        }
+        if (isSourceNoteLine(line)) {
+          notes.push(line);
+          return false;
+        }
+        return true;
+      });
+
+      const badgeIndex = working.findIndex(isSourceBadgeLine);
+      const badge = badgeIndex >= 0 ? working[badgeIndex] : "";
+      if (badgeIndex >= 0) working = working.filter((_, index) => index !== badgeIndex);
+
+      const checkStart = findChecklistStart(working);
+      const moduleStart = checkStart >= 0 ? checkStart : findSourceModuleStart(working);
+      const preface = moduleStart >= 0 ? working.slice(0, moduleStart) : working;
+      const moduleLines = moduleStart >= 0 ? working.slice(moduleStart) : [];
+      const split = splitSourcePreface(preface);
+      const checkItems = checkStart >= 0 ? moduleLines.filter(isBenefitChecklistLine) : [];
+
+      return {
+        header: top.header,
+        badge,
+        intro: split.intro,
+        title: split.title,
+        body: split.body,
+        checkItems,
+        modules: checkItems.length ? [] : buildSourceModules(moduleLines),
+        notes,
+        cta
+      };
+    }
+
+    function extractSourceHeaderBeforeBadge(lines, badgeIndex) {
+      const indexes = new Set();
+      const header = [];
+      for (let index = 0; index < badgeIndex && index < lines.length; index += 1) {
+        splitHeaderLine(lines[index]).forEach((value) => header.push(value));
+        indexes.add(index);
+      }
+      return { header: header.slice(0, 5), indexes };
+    }
+
+    function extractSourceHeaderAroundBadge(lines, badgeIndex) {
+      if (badgeIndex > 0) return extractSourceHeaderBeforeBadge(lines, badgeIndex);
+      const indexes = new Set();
+      const header = [];
+      for (let index = badgeIndex + 1; index < Math.min(lines.length, badgeIndex + 6); index += 1) {
+        const line = lines[index];
+        if (!isSourceHeaderLine(line)) break;
+        header.push(line);
+        indexes.add(index);
+      }
+      return { header: header.slice(0, 4), indexes };
+    }
+
+    function sourceStructureHeight(model) {
+      const top = model.header.length ? WF_HEADER_HEIGHT + WF_TEXT_IMAGE_GAP : 60;
+      const badge = model.badge ? WF_BADGE_HEIGHT + WF_TEXT_IMAGE_GAP : 0;
+      const intro = model.intro.length ? offerTextBlockHeight(WF_SUBTITLE_FONT, model.intro.length) + WF_FONT_GAP : 0;
+      const title = model.title.length ? offerTextBlockHeight(WF_TITLE_FONT, model.title.length) + WF_TEXT_IMAGE_GAP : 0;
+      const body = model.body.length ? offerTextBlockHeight(WF_BODY_FONT, model.body.length) + WF_TEXT_IMAGE_GAP : 0;
+      const check = model.checkItems.length ? Math.min(model.checkItems.length, 5) * WF_CHECK_ROW_HEIGHT + Math.max(0, Math.min(model.checkItems.length, 5) - 1) * WF_FONT_GAP + WF_TEXT_IMAGE_GAP : 0;
+      const modules = sourceModuleGridHeight(model.modules);
+      const notes = model.notes.length ? offerTextBlockHeight(13, model.notes.length) + WF_TEXT_IMAGE_GAP : 0;
+      const cta = model.cta.length ? 130 : 0;
+      return Math.max(620, top + badge + intro + title + body + check + modules + notes + cta + 60);
+    }
+
+    function extractSourceTopHeader(lines) {
+      const indexes = new Set();
+      const header = [];
+      for (let index = 0; index < Math.min(4, lines.length); index += 1) {
+        const line = lines[index];
+        if (isSourceTopHeaderLine(line, index, lines)) {
+          splitHeaderLine(line).forEach((value) => header.push(value));
+          indexes.add(index);
+        } else if (header.length) {
+          break;
+        }
+      }
+      return { header: header.slice(0, 5), indexes };
+    }
+
+    function isSourceTopHeaderLine(line, index, lines) {
+      const value = String(line || "").replace(/\s+/g, " ").trim();
+      if (!value) return false;
+      if ((value.match(/\[[^\]]+\]/g) || []).length >= 2) return true;
+      if ((value.match(/\[[^\]]+\]/g) || []).length >= 1) {
+        const prev = String(lines[index - 1] || "");
+        const next = String(lines[index + 1] || "");
+        return /\[[^\]]+\]/.test(prev) || /\[[^\]]+\]/.test(next);
+      }
+      if (index > 0 && value.length <= 14 && !isSourceBadgeLine(value) && !isSourceTitleLine(value)) {
+        const prev = String(lines[index - 1] || "").trim();
+        return prev.length <= 18 && !isSourceTitleLine(prev);
+      }
+      if (index === 0 && value.length <= 14 && lines[1] && String(lines[1]).trim().length <= 14 && !isSourceTitleLine(value)) {
+        return true;
+      }
+      return false;
+    }
+
+    function splitHeaderLine(line) {
+      const value = String(line || "").trim();
+      const bracketValues = [...value.matchAll(/\[([^\]]+)\]/g)].map((match) => match[1].trim()).filter(Boolean);
+      if (bracketValues.length >= 2) return bracketValues;
+      return [value];
+    }
+
+    function splitSourcePreface(lines) {
+      const values = (lines || []).filter(Boolean);
+      if (!values.length) return { intro: [], title: [], body: [] };
+      const range = sourceTitleRange(values);
+      if (range.start >= 0) {
+        const intro = values.slice(0, range.start);
+        const title = values.slice(range.start, range.end);
+        const body = values.slice(range.end);
+        return { intro, title, body };
+      }
+      if (values.length <= 2) return { intro: [], title: values, body: [] };
+      if (values.length === 3) return { intro: values.slice(0, 1), title: values.slice(1), body: [] };
+      return {
+        intro: values.slice(0, 2),
+        title: values.slice(2, Math.min(values.length, 4)),
+        body: values.slice(4)
+      };
+    }
+
+    function findSourceModuleStart(lines) {
+      const range = sourceTitleRange(lines);
+      const minIndex = range.end >= 0 ? range.end : Math.min(2, lines.length);
+      for (let index = minIndex; index < lines.length; index += 1) {
+        const tail = lines.slice(index, index + 14);
+        const signalCount = tail.filter(isModuleSignalLine).length;
+        const labelCount = tail.filter(isSourceModuleLabelLine).length;
+        if (tail.length >= 4 && signalCount >= 2 && labelCount >= 1) return index;
+        if (tail.length >= 6 && signalCount >= 4) return index;
+      }
+      return -1;
+    }
+
+    function sourceTitleRange(lines) {
+      const titleIndex = (lines || []).findIndex(isSourceTitleLine);
+      if (titleIndex < 0) return { start: -1, end: -1 };
+      const start = titleIndex > 0 && shouldPrependSourceTitleLine(lines[titleIndex - 1]) ? titleIndex - 1 : titleIndex;
+      let end = titleIndex + 1;
+      while (end < lines.length && end < start + 4) {
+        const line = lines[end];
+        if (isSourceTitleLine(line) || shouldAttachSourceTitleLine(line)) {
+          end += 1;
+          continue;
+        }
+        break;
+      }
+      return { start, end };
+    }
+
+    function shouldPrependSourceTitleLine(line) {
+      const value = String(line || "").replace(/\s+/g, " ").trim();
+      if (!value || value.length > 28) return false;
+      if (isSourceNoteLine(value) || isSourceCtaLine(value) || isSourceBadgeLine(value) || isModuleSignalLine(value)) return false;
+      if (/[.!?。！？]$/.test(value)) return false;
+      return true;
+    }
+
+    function shouldAttachSourceTitleLine(line) {
+      const value = String(line || "").replace(/\s+/g, " ").trim();
+      if (!value || value.length > 34) return false;
+      if (isSourceNoteLine(value) || isSourceCtaLine(value)) return false;
+      return /만나요|대개방|포함|세일|특가|패키지|할인|쏩니다|드립니다|프라이데이|블프|BEST/i.test(value);
+    }
+
+    function buildSourceModules(lines) {
+      const values = (lines || []).filter((line) => !isSourceNoteLine(line) && !isSourceCtaLine(line));
+      if (!values.length) return [];
+      const modules = [];
+      for (let index = 0; index < values.length; index += 1) {
+        const current = values[index];
+        const next = values[index + 1] || "";
+        if (next && isSourceModuleLabelLine(current) && isModuleSignalLine(next)) {
+          modules.push({ label: current, title: next });
+          index += 1;
+        } else if (next && isLooseSourceModuleLabelLine(current) && isModuleSignalLine(next)) {
+          modules.push({ label: current, title: next });
+          index += 1;
+        } else {
+          modules.push({ label: "", title: current });
+        }
+      }
+      return modules.slice(0, 8);
+    }
+
+    function isLooseSourceModuleLabelLine(line) {
+      const value = String(line || "").replace(/\s+/g, " ").trim();
+      if (!value || value.length > 34) return false;
+      if (isSourceTitleLine(value) || isSourceBadgeLine(value) || isSourceNoteLine(value) || isSourceCtaLine(value)) return false;
+      return !isModuleSignalLine(value) || /강의|전용|적용|카테고리|프리미엄|신규|얼리버드|시그니처/i.test(value);
+    }
+
+    function sourceModuleGridHeight(modules) {
+      const count = (modules || []).length;
+      if (!count) return 0;
+      const columns = count >= 5 ? 3 : count >= 3 ? 2 : 1;
+      const rows = Math.ceil(count / columns);
+      return rows * 92 + Math.max(0, rows - 1) * WF_FONT_GAP;
+    }
+
+    function addSourceModuleGrid(elements, modules, y) {
+      const values = (modules || []).slice(0, 8);
+      const count = values.length;
+      if (!count) return { height: 0 };
+      const columns = count >= 5 ? 3 : count >= 3 ? 2 : 1;
+      const gridW = columns === 3 ? wfPx(780) : columns === 2 ? wfPx(660) : wfPx(430);
+      const gap = wfPx(WF_FONT_GAP);
+      const cardW = Math.round((gridW - gap * (columns - 1)) / columns);
+      const cardH = wfPx(92);
+      const startX = wfCenterX(gridW);
+
+      values.forEach((item, index) => {
+        const col = index % columns;
+        const row = Math.floor(index / columns);
+        const x = startX + col * (cardW + gap);
+        const cy = y + row * (cardH + gap);
+        elements.push(fallbackShape(x, cy, cardW, cardH, "#D9D9D9", "round"));
+        const imageSize = Math.min(wfPx(58), Math.max(wfPx(44), Math.round(cardW * 0.24)));
+        const imageX = x + cardW - imageSize - wfPx(16);
+        elements.push(fallbackShape(imageX, cy + Math.round((cardH - imageSize) / 2), imageSize, imageSize, "#BDBDBD", "round"));
+        const textW = cardW - imageSize - wfPx(46);
+        if (item.label) {
+          elements.push(fallbackText(item.label, x + wfPx(18), cy + wfPx(18), textW, wfPx(20), 13, "#333333", "LEFT"));
+          elements.push(fallbackText(item.title, x + wfPx(18), cy + wfPx(44), textW, wfPx(28), 20, "#050505", "LEFT"));
+        } else {
+          elements.push(fallbackText(item.title, x + wfPx(18), cy + wfPx(32), textW, wfPx(30), 19, "#050505", "LEFT"));
+        }
+      });
+
+      return { height: sourceModuleGridHeight(values) };
+    }
+
+    function isSourceBadgeLine(line) {
+      const value = String(line || "").replace(/\s+/g, " ").trim();
+      if (isBenefitBadgeLine(value)) return true;
+      return value.length <= 28 && /혜택|benefit|특전/i.test(value) && !/%|쿠폰팩|오늘의\s*특가|할인\s*대개방/i.test(value);
+    }
+
+    function isSourceTitleLine(line) {
+      const value = String(line || "").replace(/\s+/g, " ").trim();
+      return /🔥|BEST|프라이데이|블프|특가최대|역대급|대개방|패키지|쿠폰\s*추가|쏩니다|드려요|PICK|COLOTTO|할인으로|만나요|포함/i.test(value);
+    }
+
+    function isSourceNoteLine(line) {
+      const value = String(line || "").trim();
+      return /^[※*]/.test(value) || /유의|주의|기간|수강권|적용|소장|지급|확인|상세/i.test(value) && value.length > 22;
+    }
+
+    function isSourceCtaLine(line) {
+      return /쿠폰\s*대상|대상\s*강의|전체\s*보러가기|다운\s*받기|다운로드|한\s*번에\s*받기|쿠폰팩.*받기|구매하기|신청하기|자세히\s*보기|받기\s*>|바로가기/i.test(String(line || ""));
+    }
+
+    function isSourceModuleLabelLine(line) {
+      const value = String(line || "").replace(/\s+/g, " ").trim();
+      if (!value || value.length > 28) return false;
+      if (isSourceTitleLine(value) || isSourceBadgeLine(value) || isSourceNoteLine(value)) return false;
+      return !isModuleSignalLine(value) || /강의명|연사명|전용|적용|오픈|당첨|동료|최애/i.test(value);
+    }
+
+    function isModuleSignalLine(line) {
+      const value = String(line || "").replace(/\s+/g, " ").trim();
+      return /%|원|쿠폰|쿠폰팩|특가|PICK|응모|당첨|오픈|가입|할인|드려요|COLOTTO|PASS|패스|무료|혜택|증정|세일|대개방/i.test(value);
+    }
+
+    function buildOfferFallback(elements, content, height) {
+      const model = offerFallbackModel(content.lines);
+      elements.push(fallbackShape(0, 0, 12192000, height, "#FFFFFF"));
+
+      if (model.header.length) addSourceHeaderBar(elements, model.header, 0);
+      let y = model.header.length ? WF_HEADER_HEIGHT + WF_TEXT_IMAGE_GAP : 60;
+      if (model.badge) {
+        addBenefitBadge(elements, model.badge, wfPx(y));
+        y += WF_BADGE_HEIGHT + WF_TEXT_IMAGE_GAP;
+      }
+      if (model.intro.length) {
+        const introHeight = offerTextBlockHeight(WF_SUBTITLE_FONT, model.intro.length);
+        addCenteredFallbackText(elements, model.intro.join("\n"), wfPx(y), wfPx(460), WF_SUBTITLE_FONT, "#111111", introHeight);
+        y += introHeight + WF_FONT_GAP;
+      }
+      if (model.headline.length) {
+        const headlineHeight = offerTextBlockHeight(WF_TITLE_FONT, model.headline.length);
+        addCenteredFallbackText(elements, model.headline.join("\n"), wfPx(y), wfPx(540), WF_TITLE_FONT, "#050505", headlineHeight);
+        y += headlineHeight + WF_TEXT_IMAGE_GAP;
+      }
+
+      if (model.variant === "cardList") {
+        addOfferCardList(elements, model.cards, wfPx(y));
+        return elements;
+      }
+
+      if (model.checkItems.length >= 3 && !model.percent) {
+        addBenefitChecklist(elements, model.checkItems, wfPx(y));
+        const itemCount = Math.min(model.checkItems.length, 5);
+        y += itemCount * WF_CHECK_ROW_HEIGHT + Math.max(0, itemCount - 1) * WF_FONT_GAP + WF_TEXT_IMAGE_GAP;
+        if (model.note) addCenteredFallbackText(elements, model.note, wfPx(y), wfPx(620), 13, "#666666", offerTextBlockHeight(13, 1));
+        return elements;
+      }
+
+      if (model.ribbon) {
+        addBenefitRibbon(elements, model.ribbon, wfPx(y));
+        y += WF_RIBBON_HEIGHT + WF_TEXT_IMAGE_GAP;
+      }
+      if (model.percent || model.couponTitle) {
+        addCouponTicket(elements, model.couponTitle || "쿠폰 혜택", model.percent || "", model.count || "", wfPx(y));
+        y += WF_TICKET_HEIGHT + WF_TEXT_IMAGE_GAP;
+      }
+      if (model.note) {
+        const noteHeight = offerTextBlockHeight(13, 1);
+        addCenteredFallbackText(elements, model.note, wfPx(y), wfPx(620), 13, "#666666", noteHeight);
+        y += noteHeight + WF_TEXT_IMAGE_GAP;
+      }
+      if (model.cta) {
+        const ctaY = Math.max(y, Math.round(height / WF_PX) - 130);
+        addWideFallbackCta(elements, model.cta, wfPx(ctaY));
+      }
+      return elements;
+    }
+
+    function offerFallbackModel(lines) {
+      const source = (lines || []).map((line) => String(line || "").trim()).filter(Boolean);
+      const badgeIndex = source.findIndex(isBenefitBadgeLine);
+      const sourceWithHeader = extractSourceHeaderLines(source, badgeIndex);
+      const header = sourceWithHeader.header;
+      const contentSource = sourceWithHeader.content;
+      const badge = contentSource.find(isBenefitBadgeLine) || "";
+      const note = source.find((line) => /^\*/.test(line)) || "";
+      const ctaIndex = contentSource.findIndex((line) => /전체\s*보러가기|보러가기|구매하기|신청하기|자세히\s*보기/i.test(line));
+      const ctaLine = ctaIndex >= 0 ? contentSource[ctaIndex] : "";
+      const adjacentCtaPrefix = ctaIndex > 0 && isCtaPrefixLine(contentSource[ctaIndex - 1]) ? contentSource[ctaIndex - 1] : "";
+      const detachedCtaPrefix = ctaLine ? contentSource.find((line) => line !== ctaLine && isDetachedCtaPrefixLine(line)) || "" : "";
+      const ctaPrefix = adjacentCtaPrefix || detachedCtaPrefix;
+      const cta = [ctaPrefix, ctaLine].filter(Boolean).join("\n");
+      const count = contentSource.find((line) => /^\d+\s*장$/.test(line)) || "";
+      const working = contentSource.filter((line) => line !== badge && line !== note && line !== ctaLine && line !== ctaPrefix && line !== count);
+      const percentIndex = working.findIndex((line) => /\d{1,3}\s*%/.test(line) && !/정가|수준|저렴|수강/i.test(line));
+      const checkStart = findChecklistStart(working);
+
+      if (checkStart < 0 && !count && !cta) {
+        const cardList = extractOfferCardList(working);
+        if (cardList) {
+          return {
+            variant: "cardList",
+            header,
+            badge,
+            intro: cardList.intro,
+            headline: cardList.headline,
+            cards: cardList.cards,
+            checkItems: [],
+            ribbon: "",
+            couponTitle: "",
+            percent: "",
+            count,
+            note,
+            cta
+          };
+        }
+      }
+
+      if (percentIndex >= 0) {
+        const percentLine = working[percentIndex];
+        const percent = pickStandalonePercent(working.slice(percentIndex + 1)) || percentFromLine(percentLine);
+        const preface = splitOfferPreface(working.slice(0, percentIndex + 1));
+        const after = working.slice(percentIndex + 1);
+        const ribbon = after.find((line) => /기간\s*한정|한정|앵콜|감사제|이벤트/i.test(line)) || "";
+        const couponTitle = after.find((line) => line !== ribbon && line !== percent && !/\d{1,3}\s*%/.test(line)) || "";
+        return { header, badge, variant: "coupon", intro: preface.intro, headline: preface.headline, checkItems: [], ribbon, couponTitle, percent, count, note, cta };
+      }
+
+      if (checkStart >= 0) {
+        const preface = working.slice(0, checkStart);
+        const split = splitOfferPreface(preface);
+        return {
+          header,
+          badge,
+          variant: "checkList",
+          intro: split.intro,
+          headline: split.headline,
+          checkItems: working.slice(checkStart).filter(isBenefitChecklistLine),
+          ribbon: "",
+          couponTitle: "",
+          percent: "",
+          count,
+          note,
+          cta
+        };
+      }
+
+      return {
+        header,
+        badge,
+        variant: "default",
+        intro: working.slice(0, Math.max(0, working.length - 2)),
+        headline: working.slice(Math.max(0, working.length - 2)),
+        checkItems: [],
+        ribbon: "",
+        couponTitle: "",
+        percent: "",
+        count,
+        note,
+        cta
+      };
+    }
+
+    function isBenefitBadgeLine(line) {
+      return /^혜택\s*\d+$/i.test(String(line || "").replace(/\s+/g, " ").trim());
+    }
+
+    function isBenefitChecklistLine(line) {
+      const value = String(line || "").trim();
+      if (/^BEST\b|패키지|선택을\s*위한|첫\s*가입만|쿠폰\s*추가|자동\s*지급/i.test(value)) return false;
+      return /학습\s*데이터|데이터|선정|입문자|커리큘럼|엄선|정가|저렴|수강|회차|자료|평생|소장|포함/i.test(value);
+    }
+
+    function findChecklistStart(lines) {
+      for (let index = 0; index < lines.length; index += 1) {
+        if (!isBenefitChecklistLine(lines[index])) continue;
+        let consecutiveCount = 0;
+        for (let next = index; next < lines.length; next += 1) {
+          if (!isBenefitChecklistLine(lines[next])) break;
+          consecutiveCount += 1;
+        }
+        if (consecutiveCount >= 2) return index;
+      }
+      return -1;
+    }
+
+    function extractOfferCardList(lines) {
+      const values = (lines || []).map((line) => String(line || "").trim()).filter(Boolean);
+      if (values.length < 7) return null;
+      const start = findOfferCardListStart(values);
+      if (start < 0) return null;
+      const organized = organizeOfferCardListValues(values, start);
+      const preface = splitOfferCardPreface(organized.preface);
+      const cards = sortOfferCardList(pairOfferCardLines(organized.cardLines));
+      if (cards.length < 3) return null;
+      return {
+        intro: preface.intro,
+        headline: preface.headline,
+        cards
+      };
+    }
+
+    function organizeOfferCardListValues(values, start) {
+      const preface = [];
+      const cardLines = [];
+      values.forEach((line, index) => {
+        if (index < start || isOfferCardListPrefaceLine(line)) {
+          preface.push(line);
+        } else {
+          cardLines.push(line);
+        }
+      });
+      return { preface: uniquePreserveOrder(preface), cardLines };
+    }
+
+    function findOfferCardListStart(lines) {
+      for (let index = 0; index <= lines.length - 4; index += 1) {
+        const tail = lines.slice(index);
+        const signalCount = tail.slice(0, 10).filter(isOfferCardSignalLine).length;
+        if (isOfferCardLabelLine(lines[index]) && signalCount >= 3) return index;
+      }
+      return -1;
+    }
+
+    function splitOfferCardPreface(lines) {
+      const values = (lines || []).filter(Boolean);
+      const intro = uniquePreserveOrder(values.filter(isOfferCardListIntroLine));
+      const headline = uniquePreserveOrder(values.filter(isOfferCardListTitleLine));
+      if (headline.length) return { intro, headline };
+      if (values.length <= 2) return { intro: [], headline: values };
+      if (values.length === 3) return { intro: values.slice(0, 1), headline: values.slice(1) };
+      return {
+        intro: values.slice(0, 2),
+        headline: values.slice(2)
+      };
+    }
+
+    function pairOfferCardLines(lines) {
+      const values = (lines || []).filter(Boolean);
+      const cards = [];
+      for (let index = 0; index < values.length; index += 1) {
+        const current = values[index];
+        const next = values[index + 1] || "";
+        if (next && isOfferCardLabelLine(current) && isOfferCardSignalLine(next)) {
+          cards.push({ label: current, title: next });
+          index += 1;
+        } else {
+          cards.push({ label: "", title: current });
+        }
+      }
+      return cards.slice(0, 6);
+    }
+
+    function sortOfferCardList(cards) {
+      const values = (cards || []).slice();
+      const knownCount = values.filter((card) => offerCardListPriority(card) < 99).length;
+      if (knownCount < 3) return values;
+      return values.sort((a, b) => offerCardListPriority(a) - offerCardListPriority(b));
+    }
+
+    function offerCardListPriority(card) {
+      const value = `${card && card.label || ""} ${card && card.title || ""}`;
+      if (/오늘의\s*특가|오전\s*11시|~9n|~9\d?%/i.test(value)) return 1;
+      if (/쿠폰팩|~33/i.test(value)) return 2;
+      if (/신규\s*가입|동료/i.test(value)) return 3;
+      if (/연사\s*PICK|연사PICK|최애/i.test(value)) return 4;
+      if (/COLOTTO|응모|당첨/i.test(value)) return 5;
+      return 99;
+    }
+
+    function isOfferCardListPrefaceLine(line) {
+      const value = String(line || "").replace(/\s+/g, " ").trim();
+      if (!value) return false;
+      if (value.length > 34) return false;
+      if (isOfferCardListIntroLine(value) || isOfferCardListTitleLine(value)) return true;
+      return false;
+    }
+
+    function isOfferCardListIntroLine(line) {
+      const value = String(line || "").replace(/\s+/g, " ").trim();
+      return value.length <= 34 && /프리미엄부터|신규\s*강의까지|올여름|성장을\s*위한|초특급\s*할인/i.test(value);
+    }
+
+    function isOfferCardListTitleLine(line) {
+      const value = String(line || "").replace(/\s+/g, " ").trim();
+      return value.length <= 42 && /한여름|블랙\s*프라이데이|1년에\s*단\s*한\s*번|역대급\s*할인|대개방/i.test(value);
+    }
+
+    function uniquePreserveOrder(values) {
+      const seen = new Set();
+      return (values || []).filter((value) => {
+        const key = String(value || "").replace(/\s+/g, " ").trim();
+        if (!key || seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    }
+
+    function isOfferCardLabelLine(line) {
+      const value = String(line || "").replace(/\s+/g, " ").trim();
+      if (!value || value.length > 22) return false;
+      if (/^혜택\s*\d+|\*|프라이데이|대개방|기획전|패키지$/i.test(value)) return false;
+      if (/부터|까지|위한|초특급|역대급\s*할인|할인\s*대개방/i.test(value)) return false;
+      if (/🔥|🎁|🎯|COLOTTO|PICK|쿠폰팩|쿠폰|특가|응모|\d{1,3}\s*%/i.test(value)) return false;
+      return true;
+    }
+
+    function isOfferCardSignalLine(line) {
+      const value = String(line || "").replace(/\s+/g, " ").trim();
+      return /%|쿠폰|쿠폰팩|특가|PICK|응모|당첨|오픈|가입|할인|드려요|COLOTTO|PASS|패스|무료|혜택|증정/i.test(value);
+    }
+
+    function splitOfferPreface(lines) {
+      const values = (lines || []).filter(Boolean);
+      if (values.length <= 2) return { intro: [], headline: values };
+
+      const titleIndex = values.findIndex(isOfferTitleLine);
+      if (titleIndex >= 0) {
+        const start = Math.max(0, titleIndex - (titleIndex > 0 && shouldAttachPreviousTitleLine(values[titleIndex - 1]) ? 1 : 0));
+        return {
+          intro: values.slice(0, start),
+          headline: values.slice(start)
+        };
+      }
+
+      return {
+        intro: values.slice(0, -2),
+        headline: values.slice(-2)
+      };
+    }
+
+    function isOfferTitleLine(line) {
+      return /BEST|베스트|패키지|쿠폰|할인|특가|지원금|자동\s*지급|\d{1,3}\s*%/i.test(String(line || ""));
+    }
+
+    function shouldAttachPreviousTitleLine(line) {
+      const value = String(line || "").trim();
+      if (!value) return false;
+      if (/[.!?。！？]$/.test(value)) return false;
+      if (value.length > 18) return false;
+      return true;
+    }
+
+    function extractSourceHeaderLines(source, badgeIndex) {
+      const header = [];
+      const headerIndexes = new Set();
+      const collect = (start, end, minimumCount = 1) => {
+        const collected = [];
+        const indexes = [];
+        for (let index = start; index < end && index < source.length; index += 1) {
+          const line = source[index];
+          if (!isSourceHeaderLine(line)) break;
+          collected.push(line);
+          indexes.push(index);
+        }
+        if (collected.length < minimumCount) return;
+        collected.forEach((line, index) => {
+          header.push(line);
+          headerIndexes.add(indexes[index]);
+        });
+      };
+
+      if (badgeIndex > 0) collect(0, badgeIndex);
+      if (!header.length && badgeIndex >= 0) collect(badgeIndex + 1, Math.min(source.length, badgeIndex + 5), 2);
+
+      return {
+        header: header.slice(0, 4),
+        content: source.filter((_, index) => !headerIndexes.has(index))
+      };
+    }
+
+    function isSourceHeaderLine(line) {
+      const value = String(line || "").replace(/\s+/g, " ").trim();
+      if (!value || value.length > 14) return false;
+      if (isBenefitBadgeLine(value) || /^\d+\s*장$/.test(value) || /\d{1,3}\s*%/.test(value)) return false;
+      if (/무엇|고민|수강|보세요|쿠폰|대상|강의|회원|기간|한정|앵콜|가입|자동|지급|전체|보러|구매|신청|자세히|먼저|경험|노하우|나누고|싶어요|기회/i.test(value)) return false;
+      return true;
+    }
+
+    function isCtaPrefixLine(line) {
+      const value = String(line || "").trim();
+      return /대상|강의|상품|전체|리스트|보기|보러/i.test(value) && !/\d{1,3}\s*%|혜택\s*\d+|기간\s*한정/i.test(value);
+    }
+
+    function isDetachedCtaPrefixLine(line) {
+      const value = String(line || "").replace(/\s+/g, " ").trim();
+      return /대상\s*(강의|상품|리스트)|쿠폰\s*대상/i.test(value) && !/\d{1,3}\s*%|혜택\s*\d+|기간\s*한정/i.test(value);
+    }
+
+    function pickStandalonePercent(lines) {
+      return (lines || []).find((line) => /^\d{1,3}\s*%$/.test(String(line || "").trim())) || "";
+    }
+
+    function percentFromLine(line) {
+      const match = String(line || "").match(/\d{1,3}\s*%/);
+      return match ? match[0].replace(/\s+/g, "") : "";
+    }
+
+    function wfPx(value) {
+      return Math.round(WF_PX * value);
+    }
+
+    function wfCenterX(width) {
+      return Math.round((12192000 - width) / 2);
+    }
+
+    function offerTextBlockHeight(fontSize, lineCount) {
+      return Math.ceil((lineCount || 1) * fontSize * 1.38 + fontSize * 0.22);
+    }
+
+    function fallbackWrappedTextHeight(lines, fontSize, charsPerLine) {
+      const values = Array.isArray(lines) ? lines : [lines];
+      const visualLines = values.reduce((total, line) => {
+        const length = String(line || "").replace(/\s+/g, " ").trim().length;
+        return total + Math.max(1, Math.ceil(length / Math.max(1, charsPerLine || 28)));
+      }, 0);
+      return offerTextBlockHeight(fontSize, Math.max(1, visualLines));
+    }
+
+    function offerCardListHeight(model) {
+      const introHeight = model.intro && model.intro.length ? offerTextBlockHeight(WF_SUBTITLE_FONT, model.intro.length) : 0;
+      const headlineHeight = model.headline && model.headline.length ? offerTextBlockHeight(WF_TITLE_FONT, model.headline.length) : 0;
+      const cardsModel = (model.cards || []).slice(0, 6);
+      const cardCount = Math.max(3, cardsModel.length);
+      const top = model.header && model.header.length ? WF_HEADER_HEIGHT + WF_TEXT_IMAGE_GAP : 60;
+      const badge = model.badge ? WF_BADGE_HEIGHT + WF_TEXT_IMAGE_GAP : 0;
+      const intro = introHeight ? introHeight + WF_FONT_GAP : 0;
+      const headline = headlineHeight ? headlineHeight + WF_TEXT_IMAGE_GAP : 0;
+      const cards = (cardsModel.length ? cardsModel : Array.from({ length: cardCount }, () => ({ label: "", title: "" })))
+        .reduce((total, card) => total + offerCardHeight(card), 0) + Math.max(0, cardCount - 1) * WF_FONT_GAP;
+      return Math.max(720, top + badge + intro + headline + cards + 80);
+    }
+
+    function addSourceHeaderBar(elements, items, y) {
+      const values = items.filter(Boolean).slice(0, 4);
+      if (!values.length) return;
+      const x = 0;
+      const w = 12192000;
+      const h = wfPx(48);
+      elements.push(fallbackShape(x, y, w, h, "#D9D9D9"));
+      const groupW = Math.min(w, wfPx(620));
+      const groupX = wfCenterX(groupW);
+      const itemW = Math.round(groupW / values.length);
+      values.forEach((value, index) => {
+        elements.push(fallbackText(value, groupX + itemW * index, y + wfPx(13), itemW, wfPx(22), 14, "#111111", "CENTER"));
+      });
+    }
+
+    function addBenefitBadge(elements, text, y) {
+      const w = wfPx(96);
+      const h = wfPx(WF_BADGE_HEIGHT);
+      const x = wfCenterX(w);
+      elements.push(fallbackShape(x, y, w, h, "#666666", "round"));
+      elements.push(fallbackText(text, x, y + wfPx(11), w, wfPx(22), WF_BADGE_FONT, "#FFFFFF", "CENTER"));
+    }
+
+    function addCenteredFallbackText(elements, text, y, width, fontSize, color, heightPx) {
+      const h = wfPx(heightPx || Math.max(34, fontSize * 1.5));
+      elements.push(fallbackText(text, wfCenterX(width), y, width, h, fontSize, color, "CENTER"));
+    }
+
+    function addBenefitChecklist(elements, items, y) {
+      const w = wfPx(420);
+      const h = wfPx(WF_CHECK_ROW_HEIGHT);
+      const x = wfCenterX(w);
+      items.slice(0, 5).forEach((item, index) => {
+        const cy = y + wfPx(index * (WF_CHECK_ROW_HEIGHT + WF_FONT_GAP));
+        elements.push(fallbackShape(x, cy, w, h, "#666666", "round"));
+        elements.push(fallbackText("✓", x + wfPx(20), cy + wfPx(7), wfPx(28), wfPx(22), 20, "#FFFFFF", "CENTER"));
+        elements.push(fallbackText(item, x + wfPx(54), cy + wfPx(10), w - wfPx(72), wfPx(20), WF_BODY_FONT, "#FFFFFF", "LEFT"));
+      });
+    }
+
+    function addOfferCardList(elements, cards, y) {
+      const values = (cards || []).slice(0, 6);
+      if (!values.length) return;
+      const w = wfPx(430);
+      const x = wfCenterX(w);
+      let currentY = y;
+      values.forEach((card, index) => {
+        const cardHeightPx = offerCardHeight(card);
+        const h = wfPx(cardHeightPx);
+        const cy = currentY;
+        elements.push(fallbackShape(x, cy, w, h, "#D9D9D9", "round"));
+        const imageSize = wfPx(Math.min(54, Math.max(44, cardHeightPx - 24)));
+        const imageX = x + w - wfPx(74);
+        elements.push(fallbackShape(imageX, cy + Math.round((h - imageSize) / 2), imageSize, imageSize, "#BDBDBD", "round"));
+        if (card.label) {
+          const titleLines = offerCardTitleLineCount(card.title);
+          elements.push(fallbackText(card.label, x + wfPx(24), cy + wfPx(14), w - wfPx(124), wfPx(18), 13, "#333333", "LEFT"));
+          elements.push(fallbackText(card.title, x + wfPx(24), cy + wfPx(37), w - wfPx(124), wfPx(titleLines * 25), titleLines > 1 ? 17 : 19, "#050505", "LEFT"));
+        } else {
+          const titleLines = offerCardTitleLineCount(card.title);
+          elements.push(fallbackText(card.title, x + wfPx(24), cy + wfPx(22), w - wfPx(124), wfPx(titleLines * 27), titleLines > 1 ? 18 : 20, "#050505", "LEFT"));
+        }
+        currentY += h + wfPx(WF_FONT_GAP);
+      });
+    }
+
+    function offerCardHeight(card) {
+      const titleLines = offerCardTitleLineCount(card && card.title);
+      const labelHeight = card && card.label ? 24 : 0;
+      return Math.max(78, 28 + labelHeight + titleLines * 26);
+    }
+
+    function offerCardTitleLineCount(title) {
+      const value = String(title || "").replace(/\s+/g, " ").trim();
+      if (!value) return 1;
+      return Math.min(3, Math.max(1, Math.ceil(value.length / 14)));
+    }
+
+    function addBenefitRibbon(elements, text, y) {
+      const w = wfPx(360);
+      const h = wfPx(WF_RIBBON_HEIGHT);
+      const x = wfCenterX(w);
+      elements.push(fallbackShape(x, y, w, h, "#D9D9D9"));
+      elements.push(fallbackText(text, x + wfPx(18), y + wfPx(11), w - wfPx(36), wfPx(20), 14, "#111111", "CENTER"));
+    }
+
+    function addCouponTicket(elements, title, percent, count, y) {
+      const w = wfPx(330);
+      const h = wfPx(WF_TICKET_HEIGHT);
+      const x = wfCenterX(w);
+      elements.push(fallbackShape(x, y, w, h, "#D9D9D9"));
+      elements.push(fallbackEllipse(x - wfPx(22), y + wfPx(64), wfPx(44), wfPx(44), "#FFFFFF"));
+      elements.push(fallbackEllipse(x + w - wfPx(22), y + wfPx(64), wfPx(44), wfPx(44), "#FFFFFF"));
+      elements.push(fallbackText(title, x + wfPx(28), y + wfPx(45), w - wfPx(56), wfPx(24), WF_BODY_FONT, "#111111", "LEFT"));
+      if (percent) elements.push(fallbackText(percent, x + wfPx(28), y + wfPx(83), w - wfPx(56), wfPx(50), 36, "#050505", "LEFT"));
+      if (count) {
+        const badgeSize = wfPx(64);
+        elements.push(fallbackEllipse(x + w - wfPx(45), y - wfPx(35), badgeSize, badgeSize, "#050505"));
+        elements.push(fallbackText(count, x + w - wfPx(31), y - wfPx(15), wfPx(38), wfPx(22), 18, "#FFFFFF", "CENTER"));
+      }
+    }
+
+    function addWideFallbackCta(elements, text, y) {
+      const x = wfPx(40);
+      const w = 12192000 - wfPx(80);
+      const h = wfPx(110);
+      elements.push(fallbackShape(x, y, w, h, "#EDEDED", "round"));
+      elements.push(fallbackText(text.replace(/\s*→\s*$/, ""), x + wfPx(32), y + wfPx(30), wfPx(220), wfPx(48), WF_BODY_FONT, "#111111", "LEFT"));
+      elements.push(fallbackText("→", x + wfPx(205), y + wfPx(47), wfPx(40), wfPx(24), 22, "#111111", "LEFT"));
+    }
+
+    function buildMetricFallback(elements, content) {
+      const metrics = extractMetricPairs(content.lines);
+      const headline = pickMetricHeadline(content.lines) || content.title;
+      const intro = pickMetricIntro(content.lines, headline);
+      const footer = pickMetricFooter(content.lines, metrics, headline);
+
+      elements.push(fallbackShape(0, 0, 12192000, 7600000, "#FFFFFF"));
+      elements.push(fallbackShape(600000, 0, 720000, 7600000, "#F3F3F3"));
+      elements.push(fallbackShape(10870000, 0, 720000, 7600000, "#F3F3F3"));
+      elements.push(fallbackShape(1450000, 0, 1, 7600000, "#CFCFCF"));
+      elements.push(fallbackShape(10740000, 0, 1, 7600000, "#CFCFCF"));
+
+      if (intro) elements.push(fallbackText(intro, 3000000, 520000, 6200000, 520000, 18, "#222222", "CENTER"));
+      elements.push(fallbackShape(3000000, 1160000, 6200000, 480000, "#111111", ""));
+      elements.push(fallbackText(headline, 3150000, 1240000, 5900000, 240000, 28, "#FFFFFF", "CENTER"));
+
+      addWorldMapPlaceholder(elements, 2450000, 2100000, 7250000, 2300000);
+      addMetricBubbleCloud(elements, metrics, 2550000, 1880000, 7150000, 2850000);
+
+      elements.push(fallbackShape(1450000, 4950000, 9290000, 1, "#D8D8D8"));
+      elements.push(fallbackText(footer.title, 3300000, 5380000, 5600000, 580000, 25, "#111111", "CENTER"));
+      elements.push(fallbackText(footer.body, 3750000, 6150000, 4700000, 700000, 15, "#333333", "CENTER"));
+      return elements;
+    }
+
+    function extractMetricPairs(lines) {
+      const values = [];
+      const used = new Set();
+      for (let i = 0; i < lines.length; i += 1) {
+        const current = lines[i];
+        const next = lines[i + 1] || "";
+        if (isMetricLabel(current) && isMetricValue(next)) {
+          values.push({ label: current, value: next });
+          used.add(i);
+          used.add(i + 1);
+          i += 1;
+        }
+      }
+
+      lines.forEach((line, index) => {
+        if (used.has(index)) return;
+        const match = line.match(/^(.{1,8}?)\s*([0-9][0-9.,]*(?:만|천)?\+?|[0-9]+%)$/);
+        if (match) values.push({ label: match[1].trim(), value: match[2].trim() });
+      });
+
+      return values.length ? mergeMetricPairs(values).slice(0, 6) : [
+        { label: "한국", value: "45만+" },
+        { label: "북미", value: "13만+" },
+        { label: "일본", value: "14만+" },
+        { label: "대만", value: "1.6만+" },
+        { label: "스페인", value: "4천+" },
+        { label: "태국", value: "3천+" }
+      ];
+    }
+
+    function mergeMetricPairs(values) {
+      const seen = new Set();
+      return values.filter((item) => {
+        const key = `${item.label}-${item.value}`.replace(/\s/g, "");
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    }
+
+    function isMetricLabel(value) {
+      const text = String(value || "").trim();
+      return text.length >= 1 && text.length <= 10 && !/\d|%|OFF|PASS|구매하기/i.test(text);
+    }
+
+    function isMetricValue(value) {
+      return /[0-9][0-9.,]*(?:만|천)?\+?|[0-9]+%|OFF/i.test(String(value || ""));
+    }
+
+    function pickMetricHeadline(lines) {
+      return lines.find((line) => /70\s*만|70만|돌파|전\s*국가/i.test(line)) || "";
+    }
+
+    function pickMetricIntro(lines, headline) {
+      return lines
+        .filter((line) => line !== headline)
+        .filter((line) => !isMetricLabel(line) && !isMetricValue(line))
+        .slice(0, 2)
+        .join("\n");
+    }
+
+    function pickMetricFooter(lines, metrics, headline) {
+      const metricWords = new Set(metrics.flatMap((item) => [item.label, item.value]));
+      const candidates = lines
+        .filter((line) => line !== headline && !metricWords.has(line))
+        .filter((line) => !isMetricValue(line) && line.length >= 6);
+      return {
+        title: candidates.find((line) => /선택|가치|보답|준비|혜택/i.test(line)) || "70만 명의 선택에\n더 큰 가치로 보답하겠습니다.",
+        body: candidates.slice(-3).join("\n") || "더 많은 분이 장벽 없이 성장의 기회를 잡을 수 있도록 강력한 혜택을 준비했습니다."
+      };
+    }
+
+    function addWorldMapPlaceholder(elements, x, y, w, h) {
+      const color = "#D9D9D9";
+      elements.push(fallbackEllipse(x + Math.round(w * 0.04), y + Math.round(h * 0.34), Math.round(w * 0.24), Math.round(h * 0.34), color));
+      elements.push(fallbackEllipse(x + Math.round(w * 0.23), y + Math.round(h * 0.23), Math.round(w * 0.22), Math.round(h * 0.32), color));
+      elements.push(fallbackEllipse(x + Math.round(w * 0.48), y + Math.round(h * 0.34), Math.round(w * 0.20), Math.round(h * 0.30), color));
+      elements.push(fallbackEllipse(x + Math.round(w * 0.64), y + Math.round(h * 0.42), Math.round(w * 0.26), Math.round(h * 0.28), color));
+      elements.push(fallbackShape(x + Math.round(w * 0.08), y + Math.round(h * 0.70), Math.round(w * 0.78), 90000, "#E5E5E5", "round"));
+    }
+
+    function addMetricBubbleCloud(elements, metrics, x, y, w, h) {
+      const positions = [
+        [0.54, 0.08, 1520000],
+        [0.18, 0.30, 1260000],
+        [0.78, 0.34, 1120000],
+        [0.45, 0.56, 1100000],
+        [0.32, 0.62, 850000],
+        [0.67, 0.70, 900000]
+      ];
+      metrics.slice(0, 6).forEach((item, index) => {
+        const pos = positions[index] || positions[positions.length - 1];
+        const size = pos[2];
+        const cx = x + Math.round(w * pos[0]) - Math.round(size / 2);
+        const cy = y + Math.round(h * pos[1]) - Math.round(size / 2);
+        elements.push(fallbackEllipse(cx, cy, size, size, index === 0 ? "#777777" : "#9A9A9A"));
+        elements.push(fallbackText(`${item.label}\n${item.value}`, cx + 160000, cy + Math.round(size * 0.27), size - 320000, Math.round(size * 0.46), index === 0 ? 18 : 15, "#FFFFFF", "CENTER"));
+      });
+    }
+
+    function buildDeadlineFallback(elements, content) {
+      elements.push(fallbackShape(0, 0, 12192000, 3700000, "#050505"));
+      elements.push(fallbackText(content.title, 1400000, 980000, 9400000, 1180000, 36, "#FFFFFF", "CENTER"));
+      elements.push(fallbackText(content.subtitle, 2500000, 2420000, 7000000, 520000, 20, "#FFFFFF", "CENTER"));
+      elements.push(fallbackShape(2100000, 4050000, 8000000, 780000, "#333333", "round"));
+      elements.push(fallbackText(content.body[0] || "이벤트 종료", 3000000, 4240000, 6200000, 360000, 22, "#FFFFFF", "CENTER"));
+      addCardRow(elements, content.cards.length ? content.cards : content.body.slice(1), 950000, 5350000, 10300000, 820000, 4);
+      return elements;
+    }
+
+    function buildGridFallback(elements, content, height) {
+      elements.push(fallbackText(content.subtitle, 2500000, 750000, 7000000, 440000, 16, "#444444", "CENTER"));
+      elements.push(fallbackText(content.title, 2100000, 1240000, 8000000, 820000, 30, "#111111", "CENTER"));
+      const items = content.body.concat(content.cards);
+      addCardGrid(elements, items, 1150000, 2600000, 9900000, Math.max(3300000, height - 3500000));
+      return elements;
+    }
+
+    function addStackedText(elements, lines, x, y, w, h) {
+      elements.push(fallbackShape(x, y, w, h, "#F4F4F4", "round"));
+      elements.push(fallbackText(lines.slice(0, 5).join("\n"), x + 320000, y + 300000, w - 640000, h - 600000, 16, "#111111", "LEFT"));
+    }
+
+    function addImageBand(elements, x, y, w, h) {
+      elements.push(fallbackShape(x, y, w, h, "#E6E6E6", "round"));
+    }
+
+    function addCardRow(elements, items, x, y, w, h, count) {
+      const values = items.length ? items : Array.from({ length: count }, () => "");
+      const cardCount = Math.max(1, Math.min(count, values.length || count));
+      const gap = WF_GAP;
+      const cardWidth = Math.round((w - gap * (cardCount - 1)) / cardCount);
+      for (let i = 0; i < cardCount; i += 1) {
+        const cx = x + i * (cardWidth + gap);
+        elements.push(fallbackShape(cx, y, cardWidth, h, "#F4F4F4", "round"));
+        elements.push(fallbackShape(cx + Math.round(cardWidth * 0.28), y + 210000, Math.round(cardWidth * 0.44), 330000, "#DDDDDD", "round"));
+        elements.push(fallbackText(values[i] || "", cx + 180000, y + h - 360000, cardWidth - 360000, 260000, 14, "#111111", "LEFT"));
+      }
+    }
+
+    function addCardGrid(elements, items, x, y, w, h) {
+      const values = items.length ? items.slice(0, 6) : ["콘텐츠 카드", "콘텐츠 카드", "콘텐츠 카드", "콘텐츠 카드"];
+      const columns = values.length > 4 ? 3 : 2;
+      const rows = Math.ceil(values.length / columns);
+      const gap = WF_GAP;
+      const cardWidth = Math.round((w - gap * (columns - 1)) / columns);
+      const cardHeight = Math.round((h - gap * (rows - 1)) / rows);
+      values.forEach((value, i) => {
+        const col = i % columns;
+        const row = Math.floor(i / columns);
+        const cx = x + col * (cardWidth + gap);
+        const cy = y + row * (cardHeight + gap);
+        elements.push(fallbackShape(cx, cy, cardWidth, cardHeight, "#F2F2F2", "round"));
+        elements.push(fallbackShape(cx + 260000, cy + 260000, cardWidth - 520000, Math.round(cardHeight * 0.38), "#DFDFDF", "round"));
+        elements.push(fallbackText(value, cx + 260000, cy + Math.round(cardHeight * 0.68), cardWidth - 520000, 360000, 14, "#111111", "LEFT"));
+      });
+    }
+
+    function addMetricCards(elements, items, x, y, w, h) {
+      const values = (items.length ? items : ["한국", "북미", "일본", "스페인"]).slice(0, 4);
+      const gap = WF_GAP;
+      const cardWidth = Math.round((w - gap * 3) / 4);
+      values.forEach((value, i) => {
+        const cx = x + i * (cardWidth + gap);
+        elements.push(fallbackShape(cx, y, cardWidth, h, "#F4F4F4", "round"));
+        elements.push(fallbackShape(cx + Math.round(cardWidth * 0.28), y + 250000, Math.round(cardWidth * 0.44), 360000, "#D9D9D9", "round"));
+        elements.push(fallbackText(value, cx + 180000, y + h - 360000, cardWidth - 360000, 260000, 14, "#111111", "LEFT"));
+      });
+    }
+
+    function addChipRow(elements, chips, x, y, fill, textColor) {
+      const values = chips.filter(Boolean).slice(0, 7);
+      let currentX = x;
+      values.forEach((value) => {
+        const chipWidth = Math.min(1250000, Math.max(650000, value.length * 90000 + 320000));
+        elements.push(fallbackShape(currentX, y, chipWidth, 360000, fill, "round"));
+        elements.push(fallbackText(value, currentX + 100000, y + 65000, chipWidth - 200000, 190000, 12, textColor, "CENTER"));
+        currentX += chipWidth + 140000;
+      });
+    }
+
+    function fallbackShape(x, y, w, h, fill, radius = "") {
+      return { type: "shape", x, y, w, h, fill, stroke: "", radius };
+    }
+
+    function fallbackEllipse(x, y, w, h, fill, stroke = "") {
+      return { type: "ellipse", x, y, w, h, fill, stroke, radius: "" };
+    }
+
+    function fallbackText(text, x, y, w, h, fontSize, textColor = "#111111", align = "LEFT") {
+      return {
+        type: "text",
+        x,
+        y,
+        w,
+        h,
+        text,
+        fill: "",
+        stroke: "",
+        textColor,
+        fontSize: fontSize * 100,
+        fontSizeUnit: "",
+        radius: "",
+        align
+      };
+    }
+
+    function getSelectedPptxFile() {
+      return pptxFileInput.files && pptxFileInput.files[0] ? pptxFileInput.files[0] : null;
+    }
+
+    function setReadyStatus() {
+      setStatus(READY_STATUS, "ok");
+    }
+
+    async function copyDefaultProxyUrl() {
+      defaultProxyUrlInput.focus();
+      defaultProxyUrlInput.select();
+
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(DEFAULT_SLIDES_PROXY_URL);
+        } else {
+          document.execCommand("copy");
+        }
+        copyProxyButton.textContent = "완료";
+        setTimeout(() => {
+          copyProxyButton.textContent = "복사";
+        }, 1200);
+      } catch (error) {
+        setStatus("프록시 URL을 직접 드래그해서 복사해 주세요.", "error");
+      }
+    }
+
+    function sourceNoteForMethod(method) {
+      if (method === "pptx-upload") {
+        return "업로드한 PPTX 파일에서 슬라이드 텍스트를 추출해 분석했습니다.";
+      }
+      if (method === "text-export") {
+        return "Google Slides 링크에서 텍스트 export를 바로 읽어 분석했습니다.";
+      }
+      if (method === "published-html" || method === "html-export") {
+        return "Google Slides 공개 페이지에서 텍스트를 읽어 분석했습니다.";
+      }
+      if (method === "pptx-export") {
+        return "Google Slides 링크에서 슬라이드 데이터를 읽어 분석했습니다.";
+      }
+      return "Google Slides 링크에서 슬라이드 텍스트를 읽어 분석했습니다.";
+    }
+
+    function requestSlidesText(slidesInfo) {
+      return new Promise((resolve, reject) => {
+        const requestId = `slides-${Date.now()}-${requestCount += 1}`;
+        pendingRequests[requestId] = { resolve, reject };
+        parent.postMessage({
+          pluginMessage: {
+            type: "fetch-slides",
+            requestId,
+            slidesInfo
+          }
+        }, "*");
+
+        setTimeout(() => {
+          if (!pendingRequests[requestId]) return;
+          delete pendingRequests[requestId];
+          reject(new Error("Google Slides 응답 시간이 초과되었습니다."));
+        }, 45000);
+      });
+    }
+
+    function normalizeProxyUrl(value) {
+      return String(value || "").trim().replace(/\/+$/, "");
+    }
+
+    function isTrustedProxyUrl(value) {
+      return /^https:\/\/script\.google\.com(?:\/|$)/i.test(String(value || "")) || /^https:\/\/[a-z0-9-]+\.workers\.dev(?:\/|$)/i.test(String(value || ""));
+    }
+
+    function shortenUrl(value) {
+      const text = String(value || "");
+      if (text.length <= 72) return text;
+      return `${text.slice(0, 48)}...${text.slice(-18)}`;
+    }
+
+    function readStoredValue(key) {
+      try {
+        return window.localStorage ? window.localStorage.getItem(key) : "";
+      } catch (error) {
+        return "";
+      }
+    }
+
+    function writeStoredValue(key, value) {
+      try {
+        if (window.localStorage) window.localStorage.setItem(key, value);
+      } catch (error) {
+        // Figma can block localStorage in some plugin contexts. The default URL still works.
+      }
+    }
+
+    function requestPptxConversion(slidesInfo, timeoutMs = 120000) {
+      return new Promise((resolve, reject) => {
+        const requestId = `convert-${Date.now()}-${requestCount += 1}`;
+        pendingRequests[requestId] = { resolve, reject };
+        parent.postMessage({
+          pluginMessage: {
+            type: "convert-slides-to-pptx",
+            requestId,
+            slidesInfo
+          }
+        }, "*");
+
+        setTimeout(() => {
+          if (!pendingRequests[requestId]) return;
+          delete pendingRequests[requestId];
+          reject(new Error("슬라이드 레이아웃 변환 응답 시간이 초과되었습니다."));
+        }, timeoutMs);
+      });
+    }
+
+    async function requestUploadedPptx(file) {
+      const buffer = await file.arrayBuffer();
+      return new Promise((resolve, reject) => {
+        const requestId = `upload-${Date.now()}-${requestCount += 1}`;
+        pendingRequests[requestId] = { resolve, reject };
+        parent.postMessage({
+          pluginMessage: {
+            type: "extract-uploaded-pptx",
+            requestId,
+            fileName: file.name,
+            bytes: new Uint8Array(buffer)
+          }
+        }, "*");
+
+        setTimeout(() => {
+          if (!pendingRequests[requestId]) return;
+          delete pendingRequests[requestId];
+          reject(new Error("PPTX 업로드 분석 응답 시간이 초과되었습니다."));
+        }, 60000);
+      });
+    }
+
+    function parseGoogleSlidesUrl(value) {
+      const normalizedUrl = extractGoogleSlidesLink(value);
+      let url;
+      try {
+        url = new URL(normalizedUrl);
+      } catch (error) {
+        throw new Error("올바른 Google Slides 링크를 입력해 주세요.");
+      }
+
+      if (url.hostname.toLowerCase() !== "docs.google.com") {
+        throw new Error("docs.google.com의 Google Slides 링크만 분석할 수 있습니다.");
+      }
+
+      const publicMatch = url.pathname.match(/\/presentation(?:\/u\/\d+)?\/d\/e\/([^/]+)/i);
+      if (publicMatch) {
+        return {
+          publishedId: publicMatch[1],
+          publicUrl: normalizedUrl,
+          originalUrl: normalizedUrl,
+          sourceName: "Google Slides published link"
+        };
+      }
+
+      const documentMatch = url.pathname.match(/\/presentation(?:\/u\/\d+)?\/d\/([^/]+)/i);
+      if (!documentMatch) {
+        throw new Error("Google Slides 프레젠테이션 ID를 찾지 못했습니다.");
+      }
+
+      return {
+        documentId: documentMatch[1],
+        publicUrl: normalizedUrl,
+        originalUrl: normalizedUrl,
+        sourceName: `Google Slides ${documentMatch[1].slice(0, 8)}`
+      };
+    }
+
+    function extractGoogleSlidesLink(value) {
+      const text = String(value || "").trim();
+      if (!text) {
+        throw new Error("Google Slides 링크를 입력해 주세요.");
+      }
+
+      const markdownMatch = text.match(/\]\((https?:\/\/docs\.google\.com\/presentation\/[^\s)]+)\)/i);
+      if (markdownMatch) return trimPastedUrl(markdownMatch[1]);
+
+      const urlMatch = text.match(/https?:\/\/[^\s<>"')\]]+/i);
+      if (urlMatch) return trimPastedUrl(urlMatch[0]);
+
+      if (/^docs\.google\.com\/presentation\//i.test(text)) {
+        return `https://${trimPastedUrl(text.split(/\s+/)[0])}`;
+      }
+
+      return trimPastedUrl(text);
+    }
+
+    function trimPastedUrl(value) {
+      return String(value || "")
+        .trim()
+        .replace(/^<+/, "")
+        .replace(/>+$/, "")
+        .replace(/[.,;]+$/, "");
+    }
+
+    function analyzePromotionText(rawText, sourceName) {
+      const text = normalizeText(rawText);
+      const lines = text.split("\n").map((line) => line.trim()).filter(Boolean);
+      const promotionName = extractField(lines, ["프로모션명", "프로모션 명", "행사명", "캠페인명", "이벤트명"]) || extractLikelyTitle(lines);
+      const rawPeriod = extractField(lines, ["진행기간", "기간", "일정", "운영기간"]) || "";
+      const period = formatPromotionPeriod(`${rawPeriod}\n${text}`) || extractDateRange(text);
+      const purpose = extractField(lines, ["목적", "목표", "프로모션 목적"]) || inferPurpose(text);
+      const explicitSchemes = mergeUnique(
+        extractLabeledTokens(lines, ["주요 스킴", "스킴", "혜택", "오퍼", "offer"]).map(cleanSchemeValue)
+      ).filter(isUsefulChip);
+      const inferredSchemes = mergeUnique(inferSchemes(text).map(cleanSchemeValue)).filter(isUsefulChip);
+      const schemes = (explicitSchemes.length ? explicitSchemes : inferredSchemes).slice(0, 6);
+      const grounds = mergeUnique([
+        ...extractLabeledTokens(lines, ["명분", "배경", "근거", "기념"]),
+        ...inferGrounds(text)
+      ].map(cleanGroundValue)).filter(isUsefulChip).slice(0, 5);
+      const mainReferenceBrief = extractMainReferenceBrief(text);
+      const mainReferenceHeroText = extractHeroTextFromReferenceBrief(mainReferenceBrief);
+      const visualNumber = extractVisualNumber(text, promotionName);
+      const insight = extractField(lines, ["프로모션 인사이트", "인사이트", "핵심 인사이트"]) || buildInsight(text, promotionName, schemes, grounds);
+
+      return {
+        sourceName: sourceName || "",
+        promotionName,
+        period,
+        purpose,
+        schemes: schemes.length ? schemes : ["기간한정 판매", "쿠폰 혜택", "웰컴 혜택"],
+        grounds: grounds.length ? grounds : ["기념", "감사"],
+        insight,
+        mainReferenceBrief,
+        mainReferenceHeroText,
+        concepts: buildConcepts({
+          promotionName,
+          period,
+          purpose,
+          schemes,
+          grounds,
+          visualNumber,
+          mainReferenceBrief,
+          mainReferenceHeroText,
+          text
+        })
+      };
+    }
+
+    function extractField(lines, labels) {
+      const labelPattern = labels.map(escapeRegExp).join("|");
+      const inline = new RegExp(`^(?:${labelPattern})\\s*[:：\\-]?\\s*(.+)$`, "i");
+
+      for (let index = 0; index < lines.length; index += 1) {
+        const line = lines[index];
+        const inlineMatch = line.match(inline);
+        if (inlineMatch && inlineMatch[1] && inlineMatch[1].trim().length > 1) {
+          return cleanValue(inlineMatch[1]);
+        }
+
+        if (labels.some((label) => line === label || line.replace(/\s/g, "") === label.replace(/\s/g, ""))) {
+          const next = lines[index + 1];
+          if (next && !isSectionLabel(next)) return cleanValue(next);
+        }
+      }
+      return "";
+    }
+
+    function extractLabeledTokens(lines, labels) {
+      const values = [];
+      for (let index = 0; index < lines.length; index += 1) {
+        const line = lines[index];
+        const matchedLabel = labels.find((label) => hasFieldLabel(line, label));
+        if (!matchedLabel) continue;
+
+        const after = line.slice(line.indexOf(matchedLabel) + matchedLabel.length).replace(/^[:：\-\s]+/, "");
+        if (after.length > 1) values.push(after);
+
+        for (let offset = 1; offset <= 6; offset += 1) {
+          const next = lines[index + offset];
+          if (!next || isSectionLabel(next)) break;
+          if (next.length <= 32) values.push(next);
+        }
+      }
+      return splitTokens(values.join("\n"));
+    }
+
+    function hasFieldLabel(line, label) {
+      const compactLine = line.replace(/\s/g, "");
+      const compactLabel = label.replace(/\s/g, "");
+      return line === label ||
+        compactLine === compactLabel ||
+        new RegExp("^\\s*" + escapeRegExp(label) + "(?:\\s+|[:：\\-|–—])", "i").test(line) ||
+        compactLine.startsWith(compactLabel + ":") ||
+        compactLine.startsWith(compactLabel + "：") ||
+        compactLine.startsWith(compactLabel + "-") ||
+        compactLine.startsWith(compactLabel + "–") ||
+        compactLine.startsWith(compactLabel + "—") ||
+        compactLine.startsWith(compactLabel + "|");
+    }
+
+    function splitTokens(value) {
+      return normalizeText(value)
+        .replace(/(?:^|\s)(?:\d+|[①②③④⑤⑥⑦⑧⑨⑩])[\).]\s*/g, "\n")
+        .replace(/\s+[–—-]\s+/g, "\n")
+        .split(/\n|,|·|•|\||\/|ㆍ|;|，|、/g)
+        .map(cleanSchemeValue)
+        .filter((item) => item.length > 1)
+        .filter((item) => !isSectionLabel(item));
+    }
+
+    function cleanSchemeValue(value) {
+      return cleanValue(value)
+        .replace(/^(?:\d+|[①②③④⑤⑥⑦⑧⑨⑩])[\).]\s*/g, "")
+        .replace(/^[ㄴ└┗↳]+\s*/g, "")
+        .replace(/^(?:프로모션명|프로모션 명|행사명|캠페인명|이벤트명|진행기간|기간|일정|개요|목적|목표|주요 스킴|스킴|명분|배경|근거|인사이트|디자인|컨셉|혜택)\s*[:：\-–—]?\s*/i, "")
+        .replace(/^[ㄴ└┗↳]+\s*/g, "")
+        .replace(/[()[\]{}]/g, " ")
+        .replace(/(?:유입용|미기획|예정|참고|진행예정|진행)/gi, " ")
+        .replace(/(?:^|\s)(?:월|화|수|목|금|토|일)(?:\s|$)/g, " ")
+        .replace(/\d+\s*일\s*\d+\s*명/g, " ")
+        .replace(/\s*(?:활용한|활용하는|활용)\s*/g, " ")
+        .replace(/\s*이상\s*할인율(?:\s*예정)?/g, " 할인")
+        .replace(/100\s*원\s*가격제/g, "100원 딜")
+        .replace(/https?:\/\/\S+|pin\.it\S*|www\.\S+/gi, " ")
+        .replace(/변동/g, " ")
+        .replace(/\s*오늘의\s*특가/g, " 오늘의 특가")
+        .replace(/\s+/g, " ")
+        .replace(/^[\s:：\-–—.,]+|[\s:：\-–—.,]+$/g, "")
+        .trim();
+    }
+
+    function cleanGroundValue(value) {
+      return cleanValue(value)
+        .replace(/^(?:\d+|[①②③④⑤⑥⑦⑧⑨⑩])[\).]\s*/g, "")
+        .replace(/^(?:프로모션명|프로모션 명|행사명|캠페인명|이벤트명|진행기간|기간|일정|개요|목적|목표|주요 스킴|스킴|명분|배경|근거|인사이트|디자인|컨셉|혜택)\s*[:：\-–—]?\s*/i, "")
+        .replace(/[()[\]{}]/g, " ")
+        .replace(/\b(?:시작|예정|확인|참고)\b/gi, " ")
+        .replace(/https?:\/\/\S+|pin\.it\S*|www\.\S+/gi, " ")
+        .replace(/\s+/g, " ")
+        .replace(/^[\s:：\-–—.,]+|[\s:：\-–—.,]+$/g, "")
+        .trim();
+    }
+
+    function isUsefulChip(value) {
+      const text = String(value || "").trim();
+      if (text.length < 2 || text.length > 28) return false;
+      if (/^\d{1,2}[./-]\d{1,2}$/.test(text)) return false;
+      if (/^\d+$/.test(text)) return false;
+      if (/https?|pin\.it|www\.|[A-Za-z0-9]{8,}/i.test(text)) return false;
+      if (/^slide\s*\d+$/i.test(text) || /^메인\s*페이지$/i.test(text)) return false;
+      if (/^[A-Za-z0-9_.-]{3,}$/.test(text)) return false;
+      if (/^(and|or|the|none|-)$/.test(text.toLowerCase())) return false;
+      return true;
+    }
+
+    function inferPurpose(text) {
+      if (/신규|웰컴|첫\s*구매|가입|유입/i.test(text)) return "신규 유입 극대화";
+      if (/재구매|리텐션|휴면|복귀/i.test(text)) return "재구매 및 리텐션 강화";
+      if (/매출|전환|구매|판매/i.test(text)) return "구매 전환 극대화";
+      if (/브랜드|인지|런칭|신제품/i.test(text)) return "브랜드 인지도 강화";
+      return "프로모션 참여 극대화";
+    }
+
+    function inferSchemes(text) {
+      const rules = [
+        ["카톡친 럭키드로우", /카톡친|카카오\s*톡|럭키\s*드로우|드로우|추첨/i],
+        ["오늘의 특가", /오늘의\s*특가|원데이\s*특가|일일\s*특가/i],
+        ["100원 딜", /100\s*원|백원/i],
+        ["90% 할인", /90\s*%|구십\s*퍼/i],
+        ["카테고리 특가", /카테고리|카테고리별/i],
+        ["블랙프라이데이", /블랙\s*프라이데이|블프|black\s*friday/i],
+        ["기간한정 판매", /기간\s*한정|한정|타임|선착순|마감/i],
+        ["정액 쿠폰팩", /정액|쿠폰팩|쿠폰/i],
+        ["클래스컷", /클래스\s*컷|클래스컷/i],
+        ["웰컴 혜택", /웰컴|신규|첫\s*구매/i],
+        ["할인", /할인|세일|%|특가/i],
+        ["무료배송", /무료\s*배송|배송비/i],
+        ["사은품", /사은품|증정|기프트/i],
+        ["래플", /래플|드로우|추첨/i]
+      ];
+      return rules.filter(([, pattern]) => pattern.test(text)).map(([label]) => label);
+    }
+
+    function inferGrounds(text) {
+      const grounds = [];
+      const memberMatch = text.match(/(\d{1,4})\s*만\s*(?:명|회원|유저)?/);
+      if (memberMatch) grounds.push(`유저 ${memberMatch[1]}만명 달성`);
+      if (/기념|anniversary|milestone/i.test(text)) grounds.push("기념");
+      if (/감사|thank/i.test(text)) grounds.push("감사");
+      if (/런칭|오픈|신규/i.test(text)) grounds.push("신규 론칭");
+      if (/시즌|가정의달|블랙프라이데이|연말|새해/i.test(text)) grounds.push("시즌 이슈");
+      return grounds;
+    }
+
+    function buildInsight(text, promotionName, schemes, grounds) {
+      if (/감사|기념|달성|회원|유저|\d+\s*만/i.test(text)) {
+        return "단순 할인을 넘어 사용자의 성장을 축하하고 보답하는 페스티벌 무드 형성";
+      }
+      if (/쿠폰|할인|특가|혜택/i.test(text)) {
+        return "혜택의 크기와 제한성을 빠르게 인지시켜 즉각적인 참여 이유를 만드는 구조";
+      }
+      if (/웰컴|신규|가입/i.test(text)) {
+        return "처음 만나는 사용자가 부담 없이 진입하도록 환영감과 실질 혜택을 동시에 전달";
+      }
+      return `${promotionName}의 핵심 명분과 혜택을 하나의 시각 언어로 묶어 빠른 이해와 참여를 유도`;
+    }
+
+    function extractVisualNumber(text, promotionName) {
+      const source = `${promotionName}\n${text}`;
+      const man = source.match(/(\d{1,4})\s*만/);
+      if (man) return man[1];
+      const k = source.match(/(\d+(?:\.\d+)?)\s*K/i);
+      if (k) return `${k[1]}K`;
+      const percent = source.match(/(\d{1,3})\s*%/);
+      if (percent) return `${percent[1]}%`;
+      return "KEY";
+    }
+
+    function extractMainReferenceBrief(text) {
+      const slides = parseSlideBlocks(text);
+      if (!slides.length) return "";
+      const markerIndex = slides.findIndex(isExactMainPageMarkerSlide);
+      if (markerIndex >= 0 && slides[markerIndex + 1]) {
+        return cleanReferenceBrief(slides[markerIndex + 1].text);
+      }
+      return "";
+    }
+
+    function isExactMainPageMarkerSlide(slide) {
+      const lines = normalizeText(slide.text)
+        .split("\n")
+        .map((line) => line.replace(/\s+/g, "").trim())
+        .filter(Boolean)
+        .filter((line) => !/^slide\d+$/i.test(line));
+      if (!lines.length) return false;
+      return lines[0] === "메인페이지" || /^mainpage$/i.test(lines[0]);
+    }
+
+    function parseSlideBlocks(text) {
+      const source = normalizeText(text);
+      const matches = [...source.matchAll(/(?:^|\n)Slide\s+(\d+)\s*\n/g)];
+      if (!matches.length) return [];
+      return matches.map((match, index) => {
+        const start = match.index + match[0].length;
+        const end = matches[index + 1] ? matches[index + 1].index : source.length;
+        return {
+          number: Number(match[1]),
+          text: source.slice(start, end).trim()
+        };
+      }).filter((slide) => slide.text);
+    }
+
+    function cleanReferenceBrief(value) {
+      return normalizeText(value)
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(Boolean)
+        .filter((line) => !/^slide\s+\d+$/i.test(line))
+        .slice(0, 36)
+        .join("\n");
+    }
+
+    function extractHeroTextFromReferenceBrief(referenceBrief) {
+      const lines = referenceBriefLines(referenceBrief);
+      const phraseCandidates = lines.map(extractLatinCampaignPhrase).filter(Boolean).sort((a, b) => b.length - a.length);
+      if (phraseCandidates.length) return cleanHeroText(phraseCandidates[0]);
+
+      const scored = lines.map((line, index) => {
+        const value = cleanHeroText(line);
+        let score = 0;
+        if (isNonHeroText(value)) score -= 200;
+        if (/^[A-Z0-9\s&.'-]+$/.test(value) && /[A-Z]{2,}/.test(value)) score += 80;
+        if (/[A-Z]{2,}/.test(value)) score += 40;
+        if (/[가-힣]{2,}/.test(value)) score += 20;
+        if (value.length >= 4 && value.length <= 32) score += 20;
+        if (/[\[\]{}]|쿠폰|강의|신규|시그니처|오늘의|PICK|EVENT|PROMO/i.test(value)) score -= 60;
+        if (/^\d|%|https?:\/\//i.test(value)) score -= 40;
+        return { value, score: score - index };
+      }).filter((item) => item.value).sort((a, b) => b.score - a.score);
+      return scored.length ? cleanHeroText(scored[0].value) : "";
+    }
+
+    function referenceBriefLines(referenceBrief) {
+      return normalizeText(referenceBrief)
+        .split("\n")
+        .map((line) => line.replace(/^[\-•·ㆍ\*]+\s*/, "").replace(/\s+/g, " ").trim())
+        .filter((line) => {
+          if (!line || line.length < 2) return false;
+          if (isNonHeroText(line)) return false;
+          if (/^slide\s+\d+$/i.test(line)) return false;
+          if (/^(main\s*)?visual\s*reference|reference|ref\.?|메인\s*페이지|레퍼런스|참고|image|이미지$/i.test(line)) return false;
+          if (/https?:\/\/|pin\.it|www\./i.test(line)) return false;
+          return true;
+        });
+    }
+
+    function extractLatinCampaignPhrase(value) {
+      const matches = String(value || "").replace(/\s+/g, " ").trim().match(/[A-Z][A-Z0-9]*(?:\s+[A-Z][A-Z0-9]*){1,5}/g);
+      if (!matches || !matches.length) return "";
+      return matches.sort((a, b) => b.length - a.length)[0];
+    }
+
+    function cleanHeroText(value) {
+      let text = normalizeText(value)
+        .split("\n")
+        .map((line) => line
+          .replace(/^[\-•·ㆍ\*]+\s*/, "")
+          .replace(/https?:\/\/\S+|pin\.it\S*|www\.\S+/gi, " ")
+          .replace(/\s+/g, " ")
+          .trim())
+        .filter((line) => {
+          if (!line || line.length < 2) return false;
+          if (isNonHeroText(line)) return false;
+          if (/^\d{1,2}[./-]\d{1,2}|^20\d{2}[./-]/.test(line)) return false;
+          if (/^EVENT$|^PROMO$/i.test(line)) return false;
+          return true;
+        })
+        .join("\n");
+
+      const phrase = extractLatinCampaignPhrase(text);
+      if (phrase && (!/[가-힣]/.test(text) || phrase.length >= 10)) text = phrase;
+
+      text = text
+        .replace(/\bCOLOSO\s+SUMMER\s+BLACK\s+FRIDAY\b/i, "COLOSO\nSUMMER\nBLACK FRIDAY")
+        .replace(/\bSUMMER\s+BLACK\s+FRIDAY\b/i, "SUMMER\nBLACK FRIDAY");
+
+      const seen = new Set();
+      return text.split("\n")
+        .map((line) => line.trim())
+        .filter((line) => {
+          const key = line.replace(/\s/g, "").toLowerCase();
+          if (!line || seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        })
+        .slice(0, 4)
+        .join("\n");
+    }
+
+    function isNonHeroText(value) {
+      const text = String(value || "");
+      if (/^[※*]|쿠폰|수강권|유의사항|적용|발급|태그|확인해\s*주세요|확인해\s*주시/i.test(text)) return false;
+      return /디자인\s*코멘트|코멘트|comment|디자인\s*방향|기획\s*방향|비주얼\s*방향|작업\s*가이드|가이드|설명|참고|레퍼런스|확인\s*필요|부탁드|부탁\s*드립니다|수정\s*요청|변경\s*요청|메인\s*배경|배경\s*컬러|컬러\s*반전|붉은\s*계열|긴급한\s*느낌|느낌\s*줄\s*수|(?:디자인|레이아웃|색상|컬러|위치|크기|폰트|간격|정렬).*(?:해주세요|해\s*주세요)/i.test(text);
+    }
+
+    function buildConceptPalettes(referenceBrief, wholeText) {
+      const paletteSource = referenceBrief || wholeText || "";
+      const colors = extractColorSignals(referenceBrief) || extractColorSignals(wholeText) || fallbackColorsForText(paletteSource);
+      const c = normalizePaletteSeeds(colors, paletteSource);
+      return [
+        [
+          { hex: c[0], ratio: 52 },
+          { hex: c[1], ratio: 34 },
+          { hex: c[2], ratio: 14 }
+        ],
+        [
+          { hex: c[2], ratio: 48 },
+          { hex: c[1], ratio: 30 },
+          { hex: c[0], ratio: 22 }
+        ],
+        [
+          { hex: c[1], ratio: 56 },
+          { hex: c[0], ratio: 30 },
+          { hex: c[3], ratio: 14 }
+        ]
+      ];
+    }
+
+    function extractColorSignals(text) {
+      const source = String(text || "");
+      const values = [];
+      const hexes = source.match(/#[0-9A-Fa-f]{6}\b/g) || [];
+      hexes.forEach((hex) => values.push(hex.toUpperCase()));
+
+      const rules = [
+        [/라임|네온\s*그린|형광\s*그린|lime|neon\s*green/i, "#C7FF00"],
+        [/블랙|검정|흑백|black/i, "#111111"],
+        [/화이트|흰색|흰\s*배경|white/i, "#FFFFFF"],
+        [/베이지|아이보리|크림|cream|ivory|beige/i, "#F6F0E4"],
+        [/레드|빨강|red/i, "#FF3B30"],
+        [/오렌지|orange/i, "#FF6B00"],
+        [/옐로|노랑|yellow/i, "#FFE500"],
+        [/블루|파랑|blue/i, "#2457FF"],
+        [/핑크|pink/i, "#FF5FA2"],
+        [/그린|초록|green/i, "#0E7A62"],
+        [/퍼플|보라|purple/i, "#6B4DFF"]
+      ];
+      rules.forEach(([pattern, hex]) => {
+        if (pattern.test(source)) values.push(hex);
+      });
+
+      const unique = [];
+      values.forEach((hex) => {
+        if (!unique.includes(hex)) unique.push(hex);
+      });
+      return unique.length ? unique : null;
+    }
+
+    function fallbackColorsForText(text) {
+      if (/블프|블랙\s*프라이데이|black\s*friday|세일|할인|특가/i.test(text)) {
+        return ["#C7FF00", "#111111", "#FFFFFF", "#FF4D2E"];
+      }
+      if (/봄|spring|멤버십|membership|웰컴|신규|가입|친구/i.test(text)) {
+        return ["#2457FF", "#FFFFFF", "#25E59D", "#FF7AB6"];
+      }
+      if (/쿠폰|응모|드로우|래플|혜택|benefit|coupon|draw/i.test(text)) {
+        return ["#FF6B00", "#FFFFFF", "#FFE500", "#111111"];
+      }
+      if (/큐레이션|에디토리얼|카테고리|curation|editorial|category/i.test(text)) {
+        return ["#111111", "#FFFFFF", "#2457FF", "#FF5FA2"];
+      }
+      if (/프리미엄|럭셔리|premium|luxury|chrome|metal/i.test(text)) {
+        return ["#0A0E24", "#FFFFFF", "#7D8CFF", "#C7FF00"];
+      }
+      if (/감사|기념|회원|달성|축하/i.test(text)) {
+        return ["#111111", "#D8FF3D", "#7D8CFF", "#FFFFFF"];
+      }
+      if (/웰컴|신규|가입|친구/i.test(text)) {
+        return ["#2457FF", "#FFFFFF", "#25E59D", "#111111"];
+      }
+      return ["#111111", "#FFFFFF", "#C7FF00", "#2457FF"];
+    }
+
+    function normalizePaletteSeeds(values, text) {
+      const colors = (values || []).slice();
+      const hasCreamSignal = /베이지|아이보리|크림|cream|ivory|beige/i.test(text);
+      if (!hasCreamSignal) {
+        for (let index = colors.length - 1; index >= 0; index -= 1) {
+          if (colors[index] === "#F6F0E4") colors.splice(index, 1);
+        }
+      }
+      fallbackColorsForText(text).forEach((hex) => {
+        if (!colors.includes(hex)) colors.push(hex);
+      });
+      return colors.slice(0, 4);
+    }
+
+    function buildConcepts(context) {
+      const referenceBrief = context.mainReferenceBrief || "";
+      const heroName = cleanHeroText(context.mainReferenceHeroText || extractHeroTextFromReferenceBrief(referenceBrief) || context.promotionName || "대표 워딩").replace(/\n+/g, " ");
+      const referenceNumber = referenceBrief ? extractVisualNumber(referenceBrief, context.promotionName) : "";
+      const number = referenceNumber && referenceNumber !== "KEY" ? referenceNumber : (context.visualNumber || "KEY");
+      const supportSource = [context.promotionName, context.purpose].filter(Boolean).join(" ");
+      const fallbackSource = [
+        context.promotionName,
+        context.purpose,
+        context.schemes.join(" "),
+        context.grounds.join(" ")
+      ].filter(Boolean).join(" ");
+      const visualSource = [
+        referenceBrief,
+        supportSource
+      ].filter(Boolean).join(" ");
+      const text = referenceBrief ? visualSource : (fallbackSource || context.text || "");
+      const profile = detectPromotionProfile(text);
+      const schemeText = referenceBrief
+        ? "대표 워딩과 메인 레퍼런스 무드"
+        : (context.schemes.length ? context.schemes.slice(0, 3).join(" · ") : "핵심 혜택");
+      const numberLabel = number === "KEY" ? "핵심 메시지" : number;
+      const palettes = buildConceptPalettes(referenceBrief, text);
+      const concepts = [];
+
+      if (profile.summer && (profile.blackFriday || profile.deepDiscount)) {
+        return [
+          makeConcept({
+            title: "Reference-Led Key Visual",
+            koreanTitle: "레퍼런스 기반 키비주얼",
+            hook: `${heroName} 워딩은 고정하고 메인페이지 다음 슬라이드의 톤을 가장 직접적으로 반영`,
+            description: "흰 배경 레퍼런스 다음 장의 무드, 타이포 위계, 여백감을 기준으로 메인 페이지 첫 화면을 정제",
+            visualNumber: numberLabel,
+            colors: palettes[0],
+            mainAsset: "기획안 워딩을 유지한 첫 화면형 키비주얼. 큰 한글 헤드라인, 세일 정보, 레퍼런스 무드가 한 화면에서 정렬됨",
+            texture: "Matte Editorial Poster",
+            angle: "정면 대형 헤드라인 구도",
+            background: "레퍼런스 기반 라임 블랙 스테이지",
+            strategy: "첨부된 메인페이지 다음 슬라이드를 가장 우선 참고해 실제 랜딩 첫 화면에 가까운 방향으로 잡습니다.",
+            tags: ["Key Visual", "Reference", "Landing", "Korean Type"],
+            fonts: ["Spoqa Han Sans Neo", "SUIT", "Noto Sans KR"],
+            keywords: ["korean commerce landing key visual", "summer black friday typography", "korean event page"]
+          }),
+          makeConcept({
+            title: "Commerce Offer System",
+            koreanTitle: "커머스 오퍼 시스템",
+            hook: `${heroName} 워딩은 유지하고 혜택 구조를 상품/가격/응모 모듈로 재설계`,
+            description: "오늘의 특가, 럭키드로우, 100원 딜이 각각 다른 역할로 보이도록 정보 건축을 우선 설계",
+            visualNumber: numberLabel,
+            colors: palettes[1],
+            mainAsset: "동일 워딩을 기반으로 상품 카드, 응모 카드, 가격 라벨을 분리한 커머스형 메인 시안",
+            texture: "Soft Commerce Paper",
+            angle: "모듈형 상품 카드 배열",
+            background: "레퍼런스 기반 오퍼 보드",
+            strategy: "혜택이 여러 개인 기획안을 시각 장식이 아니라 구매 흐름으로 이해시키는 컨셉입니다.",
+            tags: ["Offer", "Commerce", "Module", "Structure"],
+            fonts: ["Spoqa Han Sans Neo", "Gmarket Sans", "Noto Sans KR"],
+            keywords: ["korean commerce offer card", "sale benefit module layout", "event landing product card"]
+          }),
+          makeConcept({
+            title: "Typographic Campaign Poster",
+            koreanTitle: "타이포 캠페인 포스터",
+            hook: `${heroName}의 타이포를 중심으로 블프 감도를 캠페인 포스터처럼 압축`,
+            description: "이미지 의존도를 낮추고 한글 굵기, 행간, 번호 체계, 라벨 리듬으로 강한 첫인상을 만드는 방향",
+            visualNumber: numberLabel,
+            colors: palettes[2],
+            mainAsset: "동일한 프로모션 워딩을 대형 한글 타이포와 라벨 시스템으로 변주한 그래픽 캠페인 시안",
+            texture: "Sharp Digital Type",
+            angle: "대형 한글 타이포 포스터",
+            background: "블랙 라임 타이포 스테이지",
+            strategy: "디자인 초안 단계에서 가장 빠르게 방향성을 검증할 수 있는 강한 타이포 중심 안입니다.",
+            tags: ["Typography", "Poster", "Campaign", "Korean Font"],
+            fonts: ["Spoqa Han Sans Neo", "Sandoll GothicNeo", "Noto Sans KR"],
+            keywords: ["korean typography campaign poster", "black friday korean type", "commerce event typography"]
+          })
+        ];
+      }
+
+      if (profile.blackFriday || profile.deepDiscount || profile.summer) {
+        concepts.push(makeConcept({
+          title: profile.summer ? "Summer Black Friday" : "Deal Signal",
+          koreanTitle: profile.summer ? "썸머 블프" : "강한 할인 시그널",
+          hook: schemeText + "를 한 화면에서 터뜨려 즉시 할인감을 만드는 세일 히어로",
+          description: "강한 대비, 대형 숫자, 스티커형 혜택 오브젝트로 첫 화면 주목도를 극대화",
+          visualNumber: profile.deepDiscount ? "90%" : numberLabel,
+          colors: palettes[0],
+          mainAsset: "대형 할인 숫자와 블랙프라이데이 스티커가 겹쳐진 에디토리얼 세일 포스터",
+          texture: "High Contrast Sticker",
+          angle: "정면 대형 타이포 히어로",
+          background: "네온 라임 세일 스테이지",
+          strategy: "높은 할인율과 시즌 세일 명분을 가장 빠르게 인지시키는 방향입니다.",
+          tags: ["Sale", "Neon", "Sticker", "Impact"],
+          fonts: ["Anton", "Bebas Neue", "Spoqa Han Sans Neo"],
+          keywords: ["summer black friday poster", "neon sale landing hero", "high contrast sticker typography"]
+        }));
+      }
+
+      if (profile.draw || profile.friend || profile.coupon) {
+        concepts.push(makeConcept({
+          title: profile.draw ? "Lucky Pop Draw" : "Benefit Pop",
+          koreanTitle: profile.draw ? "럭키드로우 팝" : "혜택 팝업",
+          hook: schemeText + "를 팝업 카드와 응모 오브젝트로 묶어 참여 욕구를 강화",
+          description: "응모권, 쿠폰, 말풍선, 버튼 오브젝트가 튀어나오는 밝은 인터랙션형 비주얼",
+          visualNumber: profile.draw ? "POP" : (number === "KEY" ? "SALE" : number),
+          colors: palettes[1],
+          mainAsset: "카톡친 초대 카드와 럭키드로우 응모권이 튀어나오는 팝업 오브젝트",
+          texture: "Glossy Ticket",
+          angle: "아이소메트릭 카드 팝업",
+          background: "밝은 모듈형 이벤트 보드",
+          strategy: "참여 방식이 있는 프로모션을 게임처럼 이해시키고 클릭 이유를 분명하게 만듭니다.",
+          tags: ["Draw", "Coupon", "Pop", "Action"],
+          fonts: ["SUIT", "Gmarket Sans", "Spoqa Han Sans Neo"],
+          keywords: ["lucky draw promotion visual", "coupon ticket pop up", "mobile event card design"]
+        }));
+      }
+
+      if (profile.editorial || profile.category || profile.todayDeal) {
+        concepts.push(makeConcept({
+          title: profile.editorial ? "Editorial Deal Curation" : "Category Deal Wave",
+          koreanTitle: profile.editorial ? "에디토리얼 딜 큐레이션" : "카테고리 특가 웨이브",
+          hook: "특가와 카테고리 흐름을 큐레이션 카드처럼 정리해 브랜드 감도를 유지",
+          description: "상품 카드, 가격 라벨, 섹션 모듈을 정돈된 그리드로 묶는 커머스 편집형 비주얼",
+          visualNumber: profile.todayDeal ? "TODAY" : (number === "KEY" ? "DEAL" : number),
+          colors: palettes[2],
+          mainAsset: "오늘의 특가 카드와 카테고리 라벨이 층층이 쌓인 큐레이션 보드",
+          texture: "Soft Editorial Paper",
+          angle: "정돈된 카드 그리드",
+          background: "웜 톤 커머스 편집 스테이지",
+          strategy: "혜택은 강하지만 브랜드 톤을 잃지 않아야 하는 기획전에 적합합니다.",
+          tags: ["Editorial", "Deal", "Grid", "Commerce"],
+          fonts: ["Spoqa Han Sans Neo", "Source Han Sans", "Sandoll GothicNeo"],
+          keywords: ["editorial commerce event page", "category deal grid", "korean curated commerce landing"]
+        }));
+      }
+
+      if (profile.milestone || concepts.length < 3) {
+        concepts.push(makeConcept({
+          title: profile.milestone ? "Milestone Festival" : "Premium Campaign Signal",
+          koreanTitle: profile.milestone ? "함께 만든 기념일" : "프리미엄 캠페인 시그널",
+          hook: numberLabel + "를 상징 오브젝트로 세워 프로모션 명분을 고급스럽게 전달",
+          description: "반사광, 크롬, 얇은 라인 오브젝트로 캠페인의 규모감과 신뢰감을 표현",
+          visualNumber: number,
+          colors: palettes[0],
+          mainAsset: "중앙 숫자와 금속 리본이 결합된 프리미엄 캠페인 심볼",
+          texture: "Iridescent Chrome",
+          angle: "중앙 집중형 로우 앵글",
+          background: "다크 스튜디오 조명",
+          strategy: "프로모션을 단순 세일이 아니라 브랜드 이벤트처럼 보이게 만듭니다.",
+          tags: ["Premium", "Chrome", "Signal", "Hero"],
+          fonts: ["Acumin Pro Condensed", "DIN Condensed", "Spoqa Han Sans Neo"],
+          keywords: ["premium campaign hero", "chrome number visual", "dark event landing page"]
+        }));
+      }
+
+      while (concepts.length < 3) {
+        concepts.push(makeConcept({
+          title: "Warm Welcome System",
+          koreanTitle: "웰컴 모듈 시스템",
+          hook: "사용자가 혜택을 순서대로 따라가도록 부드러운 모듈 구조를 제안",
+          description: "카드, 리본, 안내 배지를 이용해 진입 장벽을 낮추는 친화형 프로모션 비주얼",
+          visualNumber: number === "KEY" ? "GO" : number,
+          colors: palettes[1],
+          mainAsset: "혜택 카드와 환영 리본이 부드럽게 이어지는 온보딩형 키비주얼",
+          texture: "Soft Gradient Paper",
+          angle: "정면 대칭형 카드 배열",
+          background: "밝은 축하형 커뮤니티 스테이지",
+          strategy: "신규 유입과 웰컴 혜택처럼 친절한 설명이 필요한 프로모션에 적합합니다.",
+          tags: ["Welcome", "Warm", "Card", "Friendly"],
+          fonts: ["Spoqa Han Sans Neo", "Noto Sans KR", "SUIT"],
+          keywords: ["welcome event page", "soft card promotion", "friendly campaign visual"]
+        }));
+      }
+
+      return concepts.slice(0, 3);
+    }
+
+    function detectPromotionProfile(text) {
+      return {
+        summer: /썸머|여름|summer/i.test(text),
+        blackFriday: /블랙\s*프라이데이|블프|black\s*friday/i.test(text),
+        deepDiscount: /90\s*%|할인|특가|세일|sale/i.test(text),
+        draw: /럭키\s*드로우|드로우|추첨|래플/i.test(text),
+        friend: /카톡친|카카오|친구/i.test(text),
+        coupon: /쿠폰|혜택|오퍼/i.test(text),
+        editorial: /29\s*cm|느낌|큐레이션|에디토리얼/i.test(text),
+        category: /카테고리/i.test(text),
+        todayDeal: /오늘의\s*특가|원데이|하루/i.test(text),
+        milestone: /감사|기념|달성|회원|유저|\d+\s*만/i.test(text)
+      };
+    }
+
+    function makeConcept(config) {
+      return {
+        title: config.title,
+        koreanTitle: config.koreanTitle,
+        hook: config.hook,
+        description: config.description,
+        visualNumber: String(config.visualNumber || "KEY"),
+        colors: config.colors,
+        mainAsset: config.mainAsset,
+        strategicReason: config.strategy,
+        targetEmotion: "기대감, 명확한 혜택 인지, 지금 참여해야 한다는 확신",
+        visualDirection: config.mainAsset,
+        asset: {
+          texture: config.texture,
+          angle: config.angle,
+          background: config.background,
+          searchKeywords: config.keywords
+        },
+        referenceKeywords: {
+          mainVisual: config.keywords,
+          material: [config.texture].concat(config.keywords.slice(0, 1)),
+          composition: [config.angle].concat(config.keywords.slice(1, 2)),
+          typography: config.fonts,
+          landingLayout: [config.background].concat(config.keywords.slice(2, 3))
+        },
+        typography: {
+          style: config.fonts[0] + " + Campaign System",
+          features: ["헤드라인 대비 명확화", "정보 레이어와 이미지 레이어 분리", "모바일 첫 화면 가독성 우선"],
+          fonts: config.fonts,
+          searchKeywords: config.fonts.concat(config.keywords).slice(0, 4)
+        },
+        designNotes: config.tags,
+        references: { mainVisual: [], typography: [], layout: [] }
+      };
+    }
+
+    function extractLikelyTitle(lines) {
+      const candidate = lines.find((line) => /감사제|프로모션|이벤트|기획전|세일|페스타|위크|캠페인/i.test(line) && line.length <= 40);
+      return candidate || lines[0] || "프로모션 기획안";
+    }
+
+    function extractDateRange(text) {
+      const match = text.match(/20\d{2}[.\-/년]\s*\d{1,2}[.\-/월]\s*\d{1,2}[^.\n]{0,80}(?:20\d{2}[.\-/년]\s*)?\d{1,2}[.\-/월]\s*\d{1,2}[^.\n]{0,40}/);
+      return formatPromotionPeriod(match ? match[0] : text) || "슬라이드 내 일정 확인 필요";
+    }
+
+    function formatPromotionPeriod(value) {
+      const dates = parsePromotionDates(value);
+      if (!dates.length) return "";
+      const start = dates[0];
+      const end = dates[1] || dates[0];
+      const startTime = start.time || "10:30";
+      const endTime = dates[1] && end.time ? end.time : "23:59";
+      const totalDays = Math.max(1, Math.round((dateOnly(end) - dateOnly(start)) / 86400000) + 1);
+      return `${formatDatePart(start)} ${startTime} - ${formatDatePart(end)} ${endTime} *총 ${totalDays}일`;
+    }
+
+    function parsePromotionDates(value) {
+      const source = String(value || "");
+      const fullPattern = /(20\d{2})[.\-/년]\s*(\d{1,2})[.\-/월]\s*(\d{1,2})(?:일)?(?:\s*\(([월화수목금토일])\))?(?:\s*(\d{1,2}):(\d{2}))?/g;
+      const dates = [];
+      let match;
+      while ((match = fullPattern.exec(source))) {
+        dates.push(toDatePart(match[1], match[2], match[3], match[4], match[5], match[6], match.index, match[0].length));
+      }
+      dedupeDateParts(dates);
+      if (dates.length >= 2) return dates.slice(0, 2);
+      if (!dates.length) return [];
+
+      const tail = source.slice(dates[0].index + dates[0].length);
+      const shortPattern = /(?:^|[^\d])(\d{1,2})[.\-/월]\s*(\d{1,2})(?:일)?(?:\s*\(([월화수목금토일])\))?(?:\s*(\d{1,2}):(\d{2}))?/g;
+      while ((match = shortPattern.exec(tail))) {
+        const shortDate = toDatePart(dates[0].year, match[1], match[2], match[3], match[4], match[5], match.index, match[0].length);
+        if (shortDate.month >= 1 && shortDate.month <= 12 && shortDate.day >= 1 && shortDate.day <= 31) {
+          dates.push(shortDate);
+          break;
+        }
+      }
+      if (dates.length === 1) {
+        const partialMonth = tail.match(/20\d{2}[.\-/년]\s*(\d{1,2})(?:월)?(?!\s*[.\-/]\s*\d)/) || tail.match(/(?:^|[^\d])(\d{1,2})월(?!\s*\d)/);
+        if (partialMonth) {
+          const month = Number(partialMonth[1]);
+          if (month >= 1 && month <= 12) {
+            dates.push(toDatePart(dates[0].year, month, new Date(dates[0].year, month, 0).getDate(), "", "", "", 0, 0));
+          }
+        }
+      }
+      return dates.slice(0, 2);
+    }
+
+    function dedupeDateParts(dates) {
+      const seen = new Set();
+      for (let index = dates.length - 1; index >= 0; index -= 1) {
+        const date = dates[index];
+        const key = `${date.year}.${date.month}.${date.day}.${date.time || ""}`;
+        if (seen.has(key)) {
+          dates.splice(index, 1);
+        } else {
+          seen.add(key);
+        }
+      }
+    }
+
+    function toDatePart(year, month, day, weekday, hour, minute, index, length) {
+      return {
+        year: Number(year),
+        month: Number(month),
+        day: Number(day),
+        weekday: weekday || "",
+        time: hour && minute ? `${pad2(hour)}:${pad2(minute)}` : "",
+        index: index || 0,
+        length: length || 0
+      };
+    }
+
+    function dateOnly(part) {
+      return new Date(part.year, part.month - 1, part.day);
+    }
+
+    function formatDatePart(part) {
+      return `${part.year}.${pad2(part.month)}.${pad2(part.day)} (${part.weekday || weekdayKo(part)})`;
+    }
+
+    function weekdayKo(part) {
+      return ["일", "월", "화", "수", "목", "금", "토"][dateOnly(part).getDay()];
+    }
+
+    function pad2(value) {
+      return String(value).padStart(2, "0");
+    }
+
+    function isSectionLabel(value) {
+      return /^(slide\s*\d+|메인\s*페이지|프로모션명|프로모션 명|행사명|캠페인명|이벤트명|진행기간|기간|일정|개요|목적|목표|주요 스킴|스킴|명분|배경|근거|인사이트|디자인|컨셉|혜택)(?:\s*$|\s*[:：\-–—]\s*|\s+.+)/i.test(value.trim());
+    }
+
+    function cleanValue(value) {
+      return String(value || "")
+        .replace(/[“”"']/g, "")
+        .replace(/[<>]/g, "")
+        .replace(/^[\s:：\-–—•·ㆍ]+/, "")
+        .replace(/^[ㄴ└┗↳]+\s*/, "")
+        .replace(/[\s:：\-–—•·ㆍ]+$/, "")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
+    function normalizeText(value) {
+      return String(value || "")
+        .replace(/\r/g, "\n")
+        .replace(/\u2028|\u2029/g, "\n")
+        .replace(/[ \t]+/g, " ")
+        .replace(/\n{3,}/g, "\n\n")
+        .trim();
+    }
+
+    function mergeUnique(values) {
+      const seen = new Set();
+      return values
+        .map(cleanValue)
+        .filter(Boolean)
+        .filter((value) => {
+          const key = value.replace(/\s/g, "").toLowerCase();
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+    }
+
+    function escapeRegExp(value) {
+      return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    }
+
+    function renderPreview(analysis) {
+      previewEmpty.style.display = "none";
+      preview.classList.add("visible");
+      preview.innerHTML = `
+        <div class="analysis-method">${escapeHtml(analysis.sourceNote || "기획안 텍스트를 분석했습니다.")}</div>
+        <section class="analysis-card">
+          <dl class="summary">
+            <dt>프로모션</dt>
+            <dd>${escapeHtml(analysis.promotionName)}</dd>
+            <dt>진행기간</dt>
+            <dd>${escapeHtml(analysis.period)}</dd>
+          </dl>
+          <div class="overview-card">
+            <div class="overview-label">개요</div>
+            <div class="overview-detail">
+              <div class="overview-row">
+                <div class="overview-title">목적</div>
+                <div class="chips">${renderChipList([analysis.purpose])}</div>
+              </div>
+              <div class="overview-row">
+                <div class="overview-title">주요 스킴</div>
+                <div class="chips">${renderChipList(analysis.schemes)}</div>
+              </div>
+              <div class="overview-row">
+                <div class="overview-title">명분</div>
+                <div class="chips">${renderChipList(analysis.grounds)}</div>
+              </div>
+            </div>
+          </div>
+          <div class="insight-row">
+            <div class="insight-label">인사이트</div>
+            <div class="insight-text">${escapeHtml(analysis.insight)}</div>
+          </div>
+        </section>
+        <div class="concepts">
+          ${analysis.concepts.map((concept, index) => renderConceptPreview(concept, index)).join("")}
+        </div>
+      `;
+      setPreviewExpanded(true);
+    }
+
+    function renderChipList(values) {
+      return values.map((item) => `<span class="chip">${escapeHtml(item)}</span>`).join("");
+    }
+
+    function renderConceptPreview(concept, index) {
+      return `
+        <article class="concept">
+          <div class="concept-title">
+            <span>Concept ${index + 1}</span>
+            <span>${escapeHtml(concept.title)}</span>
+          </div>
+          <div class="concept-hook">${escapeHtml(concept.hook)}</div>
+          <div class="color-row">
+            ${concept.colors.map((color) => `
+              <span class="swatch">
+                <span class="dot" style="background:${escapeHtml(color.hex)}"></span>
+                ${escapeHtml(color.hex)} ${escapeHtml(color.ratio)}%
+              </span>
+            `).join("")}
+          </div>
+        </article>
+      `;
+    }
+
+    function setBusy(isBusy, mode) {
+      convertButton.disabled = isBusy;
+      pptxFileInput.disabled = isBusy;
+      createButton.disabled = isBusy || !currentAnalysis;
+      wireframeButton.disabled = isBusy;
+      convertButton.textContent = isBusy && mode === "analysis" ? "분석 중..." : "기획안 분석하기";
+      wireframeButton.textContent = isBusy && mode === "wireframe" ? "와이어프레임 생성 중..." : "와이어프레임 만들기";
+    }
+
+    function resetAnalysisState() {
+      convertedDeck = null;
+      currentAnalysis = null;
+      preview.classList.remove("visible");
+      preview.innerHTML = "";
+      previewEmpty.style.display = "block";
+      createButton.disabled = true;
+      setPreviewExpanded(false);
+    }
+
+    function setPreviewExpanded(isExpanded) {
+      isPreviewExpanded = Boolean(isExpanded && currentAnalysis);
+      document.body.classList.toggle("has-analysis", Boolean(currentAnalysis));
+      document.body.classList.toggle("preview-expanded", isPreviewExpanded);
+      edgePreviewToggle.hidden = !currentAnalysis;
+      edgePreviewToggle.setAttribute("aria-label", isPreviewExpanded ? "분석 정보 접기" : "분석 정보 보기");
+      parent.postMessage({
+        pluginMessage: {
+          type: "resize-ui",
+          width: isPreviewExpanded ? UI_EXPANDED_WIDTH : UI_COMPACT_WIDTH,
+          height: UI_HEIGHT
+        }
+      }, "*");
+    }
+
+    function setStatus(message, tone) {
+      statusBox.textContent = message;
+      statusBox.className = `status ${tone || ""}`.trim();
+    }
+
+    function escapeHtml(value) {
+      return String(value || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+  </script>
+</body>
+</html>
